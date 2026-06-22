@@ -8,13 +8,24 @@ import { riskToneClassOf, toDashboardViewModel } from "../domain/dashboard/adapt
 import type { ChartPoint } from "../domain/dashboard/adapter";
 import type { DashboardResponse } from "../domain/dashboard/types";
 
+// 축 상단 눈금을 1/2/5 * 10^n 형태의 "보기 좋은" 값으로 올림.
+function niceCeil(value: number) {
+  if (value <= 0) return 1;
+  const base = Math.pow(10, Math.floor(Math.log10(value)));
+  const f = value / base;
+  const nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+  return nf * base;
+}
+
 function AreaChart({ data }: { data: ChartPoint[] }) {
   const width = 600;
   const height = 120;
   const pad = { top: 8, right: 8, bottom: 24, left: 32 };
   const chartWidth = width - pad.left - pad.right;
   const chartHeight = height - pad.top - pad.bottom;
-  const max = Math.max(...data.map((item) => item.total), 1);
+  // 천장 여백(headroom): 최대값에 10% 여유를 두고 보기 좋은 눈금으로 올림 → 전체 선이 위 모서리에 붙지 않음.
+  const max = niceCeil(Math.max(...data.map((item) => item.total), 1) * 1.1);
+  const yTicks = [0, 0.25, 0.5, 0.75, 1];
   const xs = data.map((_, index) => pad.left + (index / Math.max(data.length - 1, 1)) * chartWidth);
   const totalY = data.map((item) => pad.top + chartHeight - (item.total / max) * chartHeight);
   const cautionY = data.map((item) => pad.top + chartHeight - (item.caution / max) * chartHeight);
@@ -34,9 +45,15 @@ function AreaChart({ data }: { data: ChartPoint[] }) {
           <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
         </linearGradient>
       </defs>
-      {[0.25, 0.5, 0.75, 1].map((tick) => (
-        <line key={tick} x1={pad.left} x2={width - pad.right} y1={pad.top + chartHeight * (1 - tick)} y2={pad.top + chartHeight * (1 - tick)} stroke="#ffffff" strokeOpacity="0.04" />
-      ))}
+      {yTicks.map((tick) => {
+        const y = pad.top + chartHeight * (1 - tick);
+        return (
+          <g key={tick}>
+            {tick > 0 && <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#ffffff" strokeOpacity="0.04" />}
+            <text x={pad.left - 4} y={y + 3} textAnchor="end" fontSize="8" fill="#6b7280" fontFamily="JetBrains Mono">{Math.round(max * tick)}</text>
+          </g>
+        );
+      })}
       <polygon points={area(totalY)} fill="url(#total-gradient)" />
       <polygon points={area(cautionY)} fill="url(#caution-gradient)" />
       <polyline points={polyline(totalY)} fill="none" stroke="#00c8e8" strokeWidth="1.5" strokeLinejoin="round" />
@@ -121,7 +138,7 @@ export default function DashboardPage() {
             </div>
             <strong className="stat-value">{dashboard.stats.cautionLogCount.toLocaleString()}</strong>
             <p className="stat-label">최근 24시간 주의 로그</p>
-            <p className="stat-sub">라벨 기준 이상 로그 · 확인 필요</p>
+            <p className="stat-sub">분석 결과 이상 로그 · 확인 필요</p>
           </div>
         </div>
 
@@ -154,7 +171,7 @@ export default function DashboardPage() {
 
         <div className="grid-3 mt-3">
           <div className="ui-card">
-            <p className="card-title">컴포넌트별 로그 수 (24h)</p>
+            <p className="card-title">최근 24 시간 컴포넌트별 로그 수</p>
             <div className="bar-list">
               {view.componentBars.slice(0, 4).map((item) => (
                 <div className="bar-row" key={item.component}>
