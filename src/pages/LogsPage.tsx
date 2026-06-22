@@ -4,7 +4,6 @@ import { listLogs } from "../api/logs";
 import { FilterSelect } from "../components/common/FilterSelect";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
-import { LabelBadge } from "../components/domain/LabelBadge";
 import { LevelBadge } from "../components/domain/LevelBadge";
 import { StatusDot } from "../components/domain/StatusDot";
 import type { LogEntry } from "../domain/log/types";
@@ -65,7 +64,6 @@ export default function LogsPage() {
                 <th />
                 <th>#</th>
                 <th>Status</th>
-                <th>Label</th>
                 <th>Node</th>
                 <th>Timestamp</th>
                 <th>Component</th>
@@ -81,7 +79,6 @@ export default function LogsPage() {
                     <td>{isAlert && <span className="row-marker" />}</td>
                     <td className="text-faint">{log.lineNumber}</td>
                     <td><StatusDot label={log.label} /></td>
-                    <td><LabelBadge value={log.label} /></td>
                     <td>{log.node}</td>
                     <td className="whitespace-nowrap text-muted">{log.timestamp}</td>
                     <td>{log.component}</td>
