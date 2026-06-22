@@ -1,29 +1,14 @@
 import { Activity, AlertTriangle, ChevronRight, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { getDashboardSummary } from "../api/dashboard";
-import { listPatterns } from "../api/patterns";
+import { Link } from "react-router-dom";
+import { getDashboard } from "../api/dashboard";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingState } from "../components/common/LoadingState";
-import { riskMeta } from "../domain/constants";
-import type { DashboardSummary, RiskLevel } from "../domain/analyses/types";
-import type { PatternSummary } from "../domain/patterns/types";
+import { riskToneClassOf, toDashboardViewModel } from "../domain/dashboard/adapter";
+import type { ChartPoint } from "../domain/dashboard/adapter";
+import type { DashboardResponse } from "../domain/dashboard/types";
 
-const riskColors: Record<RiskLevel, string> = {
-  CRITICAL: "#ef4444",
-  HIGH: "#f97316",
-  MEDIUM: "#f59e0b",
-  LOW: "#10b981",
-};
-
-const riskTextClass: Record<RiskLevel, string> = {
-  CRITICAL: "text-danger",
-  HIGH: "text-orange",
-  MEDIUM: "text-warning",
-  LOW: "text-success",
-};
-
-function AreaChart({ data }: { data: DashboardSummary["hourlyCounts"] }) {
+function AreaChart({ data }: { data: ChartPoint[] }) {
   const width = 600;
   const height = 120;
   const pad = { top: 8, right: 8, bottom: 24, left: 32 };
@@ -32,7 +17,7 @@ function AreaChart({ data }: { data: DashboardSummary["hourlyCounts"] }) {
   const max = Math.max(...data.map((item) => item.total), 1);
   const xs = data.map((_, index) => pad.left + (index / Math.max(data.length - 1, 1)) * chartWidth);
   const totalY = data.map((item) => pad.top + chartHeight - (item.total / max) * chartHeight);
-  const anomalyY = data.map((item) => pad.top + chartHeight - (item.anomaly / max) * chartHeight);
+  const cautionY = data.map((item) => pad.top + chartHeight - (item.caution / max) * chartHeight);
   const bottom = pad.top + chartHeight;
   const polyline = (ys: number[]) => ys.map((y, index) => `${xs[index]},${y}`).join(" ");
   const area = (ys: number[]) => `${pad.left},${bottom} ${ys.map((y, index) => `${xs[index]},${y}`).join(" ")} ${xs[xs.length - 1]},${bottom}`;
@@ -44,7 +29,7 @@ function AreaChart({ data }: { data: DashboardSummary["hourlyCounts"] }) {
           <stop offset="0%" stopColor="#00c8e8" stopOpacity="0.18" />
           <stop offset="100%" stopColor="#00c8e8" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id="anomaly-gradient" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="caution-gradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#ef4444" stopOpacity="0.22" />
           <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
         </linearGradient>
@@ -53,19 +38,18 @@ function AreaChart({ data }: { data: DashboardSummary["hourlyCounts"] }) {
         <line key={tick} x1={pad.left} x2={width - pad.right} y1={pad.top + chartHeight * (1 - tick)} y2={pad.top + chartHeight * (1 - tick)} stroke="#ffffff" strokeOpacity="0.04" />
       ))}
       <polygon points={area(totalY)} fill="url(#total-gradient)" />
-      <polygon points={area(anomalyY)} fill="url(#anomaly-gradient)" />
+      <polygon points={area(cautionY)} fill="url(#caution-gradient)" />
       <polyline points={polyline(totalY)} fill="none" stroke="#00c8e8" strokeWidth="1.5" strokeLinejoin="round" />
-      <polyline points={polyline(anomalyY)} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
+      <polyline points={polyline(cautionY)} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
       {data.map((item, index) => index % 2 === 0 && (
-        <text key={item.hour} x={xs[index]} y={height - 4} textAnchor="middle" fontSize="8" fill="#374151" fontFamily="JetBrains Mono">{item.hour}</text>
+        <text key={`${item.label}-${index}`} x={xs[index]} y={height - 4} textAnchor="middle" fontSize="8" fill="#374151" fontFamily="JetBrains Mono">{item.label}</text>
       ))}
     </svg>
   );
 }
 
-function DonutChart({ counts }: { counts: Record<RiskLevel, number> }) {
-  const data = (Object.keys(riskColors) as RiskLevel[]).map((key) => ({ key, value: counts[key] ?? 0, color: riskColors[key] }));
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+function DonutChart({ data }: { data: Array<{ riskLevel: string; count: number; color: string }> }) {
+  const total = data.reduce((sum, item) => sum + item.count, 0);
   let cumulative = 0;
   const toXY = (deg: number, radius: number) => {
     const rad = (deg - 90) * (Math.PI / 180);
@@ -76,9 +60,9 @@ function DonutChart({ counts }: { counts: Record<RiskLevel, number> }) {
     <div className="donut-wrap">
       <svg viewBox="0 0 100 100" width="100" height="100">
         {data.map((item) => {
-          if (total === 0 || item.value === 0) return null;
+          if (total === 0 || item.count === 0) return null;
           const start = (cumulative / total) * 360;
-          cumulative += item.value;
+          cumulative += item.count;
           const end = (cumulative / total) * 360;
           const large = end - start > 180 ? 1 : 0;
           const outerStart = toXY(start, 38);
@@ -87,46 +71,35 @@ function DonutChart({ counts }: { counts: Record<RiskLevel, number> }) {
           const innerEnd = toXY(end, 26);
           return (
             <path
-              key={item.key}
+              key={item.riskLevel}
               d={`M ${outerStart.x} ${outerStart.y} A 38 38 0 ${large} 1 ${outerEnd.x} ${outerEnd.y} L ${innerEnd.x} ${innerEnd.y} A 26 26 0 ${large} 0 ${innerStart.x} ${innerStart.y} Z`}
               fill={item.color}
               opacity="0.85"
             />
           );
         })}
-        <text x="50" y="53" textAnchor="middle" fontSize="11" fill="#9ca3af" fontFamily="JetBrains Mono">{total}</text>
+        <text x="50" y="53" textAnchor="middle" fontSize="11" fill="#9ca3af" fontFamily="JetBrains Mono">{total.toLocaleString()}</text>
       </svg>
     </div>
   );
 }
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [patterns, setPatterns] = useState<PatternSummary[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([getDashboardSummary(), listPatterns()])
-      .then(([dashboard, patternList]) => {
-        setSummary(dashboard);
-        setPatterns(patternList);
-      })
+    getDashboard()
+      .then(setDashboard)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
 
-  const riskCounts = useMemo(() => {
-    const counts = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 } as Record<RiskLevel, number>;
-    summary?.recentAnalyses.forEach((item) => {
-      counts[item.riskLevel] += 1;
-    });
-    return counts;
-  }, [summary]);
+  const view = useMemo(() => (dashboard ? toDashboardViewModel(dashboard) : null), [dashboard]);
 
   if (error) return <ErrorState message={error} />;
-  if (!summary) return <LoadingState />;
+  if (!dashboard || !view) return <LoadingState />;
 
-  const maxPattern = Math.max(...patterns.map((pattern) => pattern.occurrences), 1);
+  const maxComponent = Math.max(...view.componentBars.map((item) => item.count), 1);
 
   return (
     <div className="screen-scroll scrollbar-hide">
@@ -135,20 +108,20 @@ export default function DashboardPage() {
           <div className="stat-card">
             <div className="stat-head">
               <Activity size={14} />
-              <button className="view-link" onClick={() => navigate("/logs")}>전체 보기 <ChevronRight size={9} /></button>
+              <Link className="view-link" to="/logs">전체 보기 <ChevronRight size={9} /></Link>
             </div>
-            <strong className="stat-value">{summary.totalLogs.toLocaleString()}</strong>
+            <strong className="stat-value">{dashboard.stats.totalLogCount.toLocaleString()}</strong>
             <p className="stat-label">최근 24시간 총 로그</p>
-            <p className="stat-sub">저장 로그 기준 집계</p>
+            <p className="stat-sub">분석 완료 {dashboard.stats.analyzedLogCount.toLocaleString()}건</p>
           </div>
           <div className="stat-card danger">
             <div className="stat-head">
               <AlertTriangle size={14} />
               <span className="mini-dot" />
             </div>
-            <strong className="stat-value">{summary.anomalyLogs.toLocaleString()}</strong>
+            <strong className="stat-value">{dashboard.stats.cautionLogCount.toLocaleString()}</strong>
             <p className="stat-label">최근 24시간 주의 로그</p>
-            <p className="stat-sub">AI 분석 완료 · 즉시 확인 필요</p>
+            <p className="stat-sub">라벨 기준 이상 로그 · 확인 필요</p>
           </div>
         </div>
 
@@ -162,17 +135,17 @@ export default function DashboardPage() {
                 <span>최근 24시간</span>
               </div>
             </div>
-            <AreaChart data={summary.hourlyCounts} />
+            <AreaChart data={view.timeSeries} />
           </div>
 
           <div className="ui-card">
-            <p className="card-title">주의 로그 위험도 분포</p>
-            <DonutChart counts={riskCounts} />
+            <p className="card-title">위험도 분포</p>
+            <DonutChart data={view.riskDistribution} />
             <div className="risk-list">
-              {(Object.keys(riskColors) as RiskLevel[]).map((level) => (
-                <div className="risk-row" key={level}>
-                  <span><i style={{ background: riskColors[level] }} />{riskMeta[level].label}</span>
-                  <strong>{riskCounts[level]}</strong>
+              {view.riskDistribution.map((item) => (
+                <div className="risk-row" key={item.riskLevel}>
+                  <span><i style={{ background: item.color }} />{item.riskLevel}</span>
+                  <strong>{item.count.toLocaleString()}</strong>
                 </div>
               ))}
             </div>
@@ -183,11 +156,11 @@ export default function DashboardPage() {
           <div className="ui-card">
             <p className="card-title">컴포넌트별 로그 수 (24h)</p>
             <div className="bar-list">
-              {patterns.slice(0, 4).map((pattern) => (
-                <div className="bar-row" key={pattern.id}>
-                  <span>{pattern.id}</span>
-                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(pattern.occurrences / maxPattern) * 100}%` }} /></div>
-                  <strong>{pattern.occurrences}</strong>
+              {view.componentBars.slice(0, 4).map((item) => (
+                <div className="bar-row" key={item.component}>
+                  <span>{item.component}</span>
+                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(item.count / maxComponent) * 100}%` }} /></div>
+                  <strong>{item.count.toLocaleString()}</strong>
                 </div>
               ))}
             </div>
@@ -199,14 +172,14 @@ export default function DashboardPage() {
               <Link className="view-link" to="/analyses">전체 보기 <ChevronRight size={9} /></Link>
             </div>
             <div className="mini-list">
-              {summary.recentAnalyses.slice(0, 4).map((analysis) => (
-                <Link className="mini-row" to={`/analyses/${analysis.id}`} key={analysis.id}>
+              {dashboard.recentCautionLogs.slice(0, 4).map((log) => (
+                <div className="mini-row" key={log.logId}>
                   <span className="mini-dot" />
                   <div className="truncate">
-                    <p>{analysis.reason}</p>
-                    <small><span>{analysis.node}</span><span className={riskTextClass[analysis.riskLevel]}>{riskMeta[analysis.riskLevel].label}</span></small>
+                    <p>{log.content}</p>
+                    <small><span>{log.node}</span><span>{log.label}</span><span>{log.logLevel}</span></small>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
@@ -217,12 +190,12 @@ export default function DashboardPage() {
               <Link className="view-link" to="/patterns">전체 보기 <ChevronRight size={9} /></Link>
             </div>
             <div className="mini-list">
-              {patterns.slice(0, 4).map((pattern) => (
-                <div className="mini-row" key={pattern.id}>
-                  <TrendingUp size={10} className={`mt-0.5 shrink-0 ${riskTextClass[pattern.riskLevel]}`} />
+              {dashboard.recentPatterns.slice(0, 4).map((pattern) => (
+                <div className="mini-row" key={pattern.patternId}>
+                  <TrendingUp size={10} className={`mt-0.5 shrink-0 ${riskToneClassOf(pattern.riskLevel)}`} />
                   <div className="truncate">
-                    <p>{pattern.title}</p>
-                    <small><span>{pattern.occurrences.toLocaleString()}건</span></small>
+                    <p>{pattern.patternName}</p>
+                    <small><span>{pattern.count.toLocaleString()}건</span><span>{pattern.riskLevel}</span></small>
                   </div>
                 </div>
               ))}

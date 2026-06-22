@@ -1,4 +1,4 @@
-import type { AnalysisDetail, AnalysisSummary, DashboardSummary } from "../domain/analyses/types";
+import type { AnalysisDetail, AnalysisSummary } from "../domain/analyses/types";
 import { mockLogs } from "./logs";
 
 export const mockAnalysisDetails: AnalysisDetail[] = [
@@ -121,22 +121,3 @@ export const mockAnalyses: AnalysisSummary[] = mockAnalysisDetails.map((detail) 
   reason: detail.reason,
   patternId: detail.patternId,
 }));
-
-export const mockDashboard: DashboardSummary = {
-  totalLogs: 1284,
-  anomalyLogs: 7,
-  analyzedAnomalies: mockAnalyses.length,
-  patternCount: 4,
-  latestAnalysisAt: "2026-06-05 07:55:01",
-  recentAnalyses: mockAnalyses.slice(0, 4),
-  hourlyCounts: [
-    { hour: "00", total: 42, anomaly: 2 },
-    { hour: "01", total: 38, anomaly: 3 },
-    { hour: "02", total: 55, anomaly: 5 },
-    { hour: "03", total: 61, anomaly: 4 },
-    { hour: "04", total: 78, anomaly: 6 },
-    { hour: "05", total: 83, anomaly: 7 },
-    { hour: "06", total: 71, anomaly: 3 },
-    { hour: "07", total: 94, anomaly: 8 },
-  ],
-};

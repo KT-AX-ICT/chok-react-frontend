@@ -26,17 +26,3 @@ export interface AnalysisDetail extends AnalysisSummary {
     description: string;
   };
 }
-
-export interface DashboardSummary {
-  totalLogs: number;
-  anomalyLogs: number;
-  analyzedAnomalies: number;
-  patternCount: number;
-  latestAnalysisAt: string;
-  recentAnalyses: AnalysisSummary[];
-  hourlyCounts: Array<{
-    hour: string;
-    total: number;
-    anomaly: number;
-  }>;
-}
