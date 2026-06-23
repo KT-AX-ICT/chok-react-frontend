@@ -22,6 +22,9 @@ const riskOptions = [
 
 const PAGE_SIZE = 20;
 
+// 패턴 클러스터 미분류 번호(백엔드 LogAnalysis.clusterId 기본값).
+const UNCLUSTERED = 99;
+
 export default function AnalysesPage() {
   const [items, setItems] = useState<AnalysisSummary[]>([]);
   const [riskLevel, setRiskLevel] = useState("ALL");
@@ -32,24 +35,39 @@ export default function AnalysesPage() {
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({ selectedDate: "", recent24h: true });
   const [page, setPage] = useState(1);
 
+  // 백엔드 GET /api/v1/analysis는 Pageable만 받고 riskLevel/keyword 필터가 없다.
+  // 따라서 목록은 한 번만 받아오고, 위험도/검색 필터는 아래 클라이언트 측에서 처리한다.
   useEffect(() => {
     setLoading(true);
-    listAnalyses({ riskLevel, keyword })
+    listAnalyses()
       .then((response) => {
-        setItems(response);
+        setItems(response.items);
         setError(null);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
       .finally(() => setLoading(false));
-  }, [riskLevel, keyword]);
+  }, []);
+
+  // 클라이언트 측 위험도/검색 필터(서버 미지원 대체).
+  const filtered = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    return items
+      .filter((item) => riskLevel === "ALL" || item.riskLevel === riskLevel)
+      .filter((item) => {
+        if (!kw) return true;
+        return [item.log.label, item.log.node, item.aiSummary].some((value) =>
+          value.toLowerCase().includes(kw),
+        );
+      });
+  }, [items, riskLevel, keyword]);
 
   // 날짜 필터는 순수 UI 껍질 — 실제 필터링 없이 캘린더 활성 표시에만 사용.
   const activeDates = useMemo(
-    () => new Set(items.map((item) => item.timestamp.slice(0, 10))),
-    [items],
+    () => new Set(filtered.map((item) => item.log.occurredAt.slice(0, 10))),
+    [filtered],
   );
 
-  const totalPages = Math.ceil(items.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 
   const toggle = (id: number) => {
     setExpanded((prev) => {
@@ -66,7 +84,7 @@ export default function AnalysesPage() {
         icon={AlertTriangle}
         iconClassName="text-danger"
         title="주의 로그 AI 분석"
-        chip={<span className="count-chip bg-danger/10 text-danger">{items.length}</span>}
+        chip={<span className="count-chip bg-danger/10 text-danger">{filtered.length}</span>}
         note="최근 24시간 · 위험도 높은 순"
         actions={
           <>
@@ -74,7 +92,7 @@ export default function AnalysesPage() {
             <DateFilter value={dateFilter} activeDates={activeDates} onChange={setDateFilter} />
             <label className="search-control">
               <Search size={12} />
-              <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="라벨, 노드, 근거 검색..." />
+              <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="라벨, 노드, 요약 검색..." />
             </label>
           </>
         }
@@ -94,22 +112,23 @@ export default function AnalysesPage() {
               <span>AI 요약</span>
               <span />
             </div>
-            {items.map((item) => {
-              const isOpen = expanded.has(item.id);
-              const clusterLabel = item.patternId
-                ? `${item.patternId} - ${riskMeta[item.riskLevel].label}`
-                : "-";
+            {filtered.map((item) => {
+              const isOpen = expanded.has(item.analysisId);
+              const clusterLabel =
+                item.clusterId !== undefined && item.clusterId !== UNCLUSTERED
+                  ? `#${item.clusterId} - ${riskMeta[item.riskLevel].label}`
+                  : "-";
               return (
-                <div className={`analysis-row-wrap risk-${item.riskLevel}`} key={item.id}>
+                <div className={`analysis-row-wrap risk-${item.riskLevel}`} key={item.analysisId}>
                   <div
                     className="analysis-row cursor-pointer"
                     role="button"
                     tabIndex={0}
-                    onClick={() => toggle(item.id)}
+                    onClick={() => toggle(item.analysisId)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        toggle(item.id);
+                        toggle(item.analysisId);
                       }
                     }}
                   >
@@ -118,13 +137,13 @@ export default function AnalysesPage() {
                     ) : (
                       <ChevronDown size={11} className="text-muted" />
                     )}
-                    <span className="whitespace-nowrap text-muted">{item.timestamp}</span>
-                    <span className="truncate">{item.node}</span>
+                    <span className="whitespace-nowrap text-muted">{item.log.occurredAt}</span>
+                    <span className="truncate">{item.log.node}</span>
                     <RiskBadge value={item.riskLevel} />
                     <span className="tone-chip truncate">{clusterLabel}</span>
-                    <span className="truncate">{item.reason}</span>
+                    <span className="truncate">{item.aiSummary}</span>
                     <Link
-                      to={`/analyses/${item.id}`}
+                      to={`/analyses/${item.analysisId}`}
                       className="detail-link"
                       onClick={(event) => event.stopPropagation()}
                     >
@@ -139,14 +158,14 @@ export default function AnalysesPage() {
                         <RiskBadge value={item.riskLevel} />
                       </div>
                       <div className="accordion-body">
-                        <p>{item.reason}</p>
+                        <p>{item.aiSummary}</p>
                       </div>
-                      {item.patternId && (
-                        <div className="accordion-chips">
-                          <span className="tone-chip">{item.patternId}</span>
-                          <span className="tone-chip">{riskMeta[item.riskLevel].label}</span>
-                        </div>
-                      )}
+                      <div className="accordion-chips">
+                        {item.clusterId !== undefined && item.clusterId !== UNCLUSTERED && (
+                          <span className="tone-chip">패턴 #{item.clusterId}</span>
+                        )}
+                        <span className="tone-chip">{riskMeta[item.riskLevel].label}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -157,7 +176,7 @@ export default function AnalysesPage() {
           <Pagination
             page={page}
             totalPages={totalPages}
-            totalItems={items.length}
+            totalItems={filtered.length}
             pageSize={PAGE_SIZE}
             onChange={setPage}
           />
