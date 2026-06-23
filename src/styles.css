@@ -127,7 +127,7 @@
   }
 
   .side-nav {
-    @apply flex w-48 shrink-0 flex-col border-r border-line bg-surface-3 px-2 py-4;
+    @apply flex w-56 shrink-0 flex-col border-r border-line bg-surface-3 px-2 py-4;
   }
 
   .nav-title {
@@ -135,7 +135,7 @@
   }
 
   .nav-link {
-    @apply mb-0.5 flex min-h-[34px] items-center gap-2.5 rounded px-3 py-2 font-mono text-xs text-muted transition-colors;
+    @apply mb-0.5 flex min-h-[34px] items-center gap-2.5 whitespace-nowrap rounded px-3 py-2 font-mono text-xs text-muted transition-colors;
   }
 
   .nav-link svg {
@@ -397,7 +397,7 @@
   }
 
   table {
-    @apply w-full min-w-[780px] border-collapse font-mono text-xs;
+    @apply w-full min-w-[980px] table-fixed border-collapse font-mono text-xs;
   }
 
   thead tr {
