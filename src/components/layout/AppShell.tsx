@@ -2,6 +2,7 @@ import { Activity, AlertTriangle, BarChart2, Circle, List } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { getDashboard } from "../../api/dashboard";
+import { ThemeToggle } from "./ThemeToggle";
 import type { DashboardResponse } from "../../domain/dashboard/types";
 
 const navItems = [
@@ -43,12 +44,10 @@ export function AppShell() {
             <Circle size={7} className="dot-yellow" fill="currentColor" />
             <Circle size={7} className="dot-green" fill="currentColor" />
           </div>
-          <span>LOGVIEW - AI-Powered Log Analysis</span>
+          <span className="brand">CHOK</span>
+          <span className="brand-sub">AI-Powered Log Analysis</span>
         </div>
-        <div className="live-status">
-          <span />
-          <strong>LIVE</strong>
-        </div>
+        <ThemeToggle />
       </header>
 
       <div className="app-body">

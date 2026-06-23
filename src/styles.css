@@ -94,13 +94,12 @@
   }
 
   .window-title,
-  .window-dots,
-  .live-status {
+  .window-dots {
     @apply flex items-center;
   }
 
   .window-title {
-    @apply gap-3 select-none font-mono text-[10px] text-faint;
+    @apply gap-3 select-none font-mono text-[12px] text-faint;
   }
 
   .window-dots {
@@ -111,12 +110,16 @@
   .dot-yellow { @apply text-warning; }
   .dot-green { @apply text-success; }
 
-  .live-status {
-    @apply gap-1.5 font-mono text-[9px] text-faint;
+  .brand {
+    @apply font-mono text-[14px] font-semibold tracking-[0.22em] text-primary;
   }
 
-  .live-status span {
-    @apply h-1.5 w-1.5 rounded-full bg-success;
+  .brand-sub {
+    @apply font-mono text-[11px] text-faint;
+  }
+
+  .theme-toggle {
+    @apply flex items-center gap-1.5 rounded border border-line px-2.5 py-1 font-mono text-[11px] text-muted transition-colors hover:border-faint hover:text-text-main;
   }
 
   .app-body {
