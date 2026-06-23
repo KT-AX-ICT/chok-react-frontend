@@ -162,25 +162,28 @@
     @apply mx-auto max-w-[1200px];
   }
 
-  .screen-header,
-  .table-toolbar {
-    @apply flex shrink-0 items-center gap-2 border-b border-line px-6 py-3;
+  .page-header {
+    @apply flex shrink-0 items-center justify-between gap-3 border-b border-line px-5 py-3;
   }
 
-  .table-toolbar {
-    @apply px-5;
+  .page-header-main {
+    @apply min-w-0;
   }
 
-  .screen-header-title {
+  .page-header-title {
     @apply flex items-center gap-2 font-mono text-sm text-text-main;
   }
 
-  .screen-header-title svg {
+  .page-header-title svg {
     @apply text-primary;
   }
 
-  .screen-header-note {
-    @apply mb-0 ml-6 mt-0.5 text-[11px] text-muted;
+  .page-header-note {
+    @apply mb-0 mt-0.5 text-[11px] text-muted;
+  }
+
+  .page-header-actions {
+    @apply flex shrink-0 items-center gap-2;
   }
 
   .count-chip,
@@ -334,10 +337,6 @@
     @apply h-full rounded-sm bg-primary/70;
   }
 
-  .toolbar-spacer {
-    @apply flex-1;
-  }
-
   .filter-control {
     @apply relative flex flex-row items-center gap-1.5 font-mono text-[11px] text-muted;
   }
@@ -459,7 +458,7 @@
   }
 
   .detail-content {
-    @apply p-6;
+    @apply p-5;
   }
 
   .detail-stack {
@@ -492,7 +491,7 @@
   }
 
   .pattern-grid {
-    @apply grid max-w-[1100px] grid-cols-2 gap-4;
+    @apply grid max-w-[1200px] grid-cols-2 gap-4;
   }
 
   .pattern-card {
@@ -549,5 +548,116 @@
 
   .state-box.error {
     @apply border-danger/35 text-red-200;
+  }
+
+  /* 날짜 필터 토글 (캘린더 버튼 + 최근 24시간 버튼 공용) */
+  .date-toggle {
+    @apply flex h-[31px] items-center gap-1.5 rounded border border-line px-3 font-mono text-[11px] text-muted transition-colors hover:border-faint hover:text-text-main;
+  }
+
+  .date-toggle.active {
+    @apply border-primary/30 bg-primary/10 text-primary;
+  }
+
+  /* 캘린더 팝오버 */
+  .calendar-pop {
+    @apply absolute left-0 top-full z-50 mt-1 w-64 rounded border border-line bg-surface p-4 shadow-xl;
+  }
+
+  .calendar-nav {
+    @apply mb-3 flex items-center justify-between;
+  }
+
+  .calendar-nav span {
+    @apply font-mono text-[11px] text-text-main;
+  }
+
+  .calendar-nav button {
+    @apply p-1 text-muted transition-colors hover:text-text-main;
+  }
+
+  .calendar-dow {
+    @apply mb-1 grid grid-cols-7;
+  }
+
+  .calendar-dow span {
+    @apply py-1 text-center font-mono text-[9px] text-faint;
+  }
+
+  .calendar-dow span.sun { @apply text-danger/60; }
+  .calendar-dow span.sat { @apply text-primary/60; }
+
+  .calendar-grid {
+    @apply grid grid-cols-7 gap-y-0.5;
+  }
+
+  .calendar-cell {
+    @apply relative flex h-8 flex-col items-center justify-center rounded font-mono text-[11px] text-text-main transition-colors;
+  }
+
+  .calendar-cell.sun { @apply text-danger; }
+  .calendar-cell.sat { @apply text-primary; }
+  .calendar-cell.has-logs:hover { @apply bg-surface-2; }
+  .calendar-cell.empty { @apply cursor-default text-faint; }
+  .calendar-cell.empty.sun { @apply text-danger/25; }
+  .calendar-cell.empty.sat { @apply text-primary/25; }
+  .calendar-cell.selected { @apply bg-primary/20 text-primary; }
+
+  .calendar-dot {
+    @apply absolute bottom-0.5 h-1 w-1 rounded-full bg-primary/60;
+  }
+
+  /* 페이지네이션 */
+  .pagination {
+    @apply flex shrink-0 flex-col items-center gap-2 border-t border-line py-8;
+  }
+
+  .pagination-controls {
+    @apply flex items-center gap-1;
+  }
+
+  .pagination-btn {
+    @apply flex h-8 w-8 items-center justify-center rounded text-muted transition-colors hover:bg-surface-2 hover:text-text-main disabled:cursor-not-allowed disabled:opacity-25;
+  }
+
+  .pagination-page {
+    @apply flex h-8 w-8 items-center justify-center rounded font-mono text-xs text-muted transition-colors hover:bg-surface-2 hover:text-text-main;
+  }
+
+  .pagination-page.active {
+    @apply border border-primary/30 bg-primary/10 text-primary;
+  }
+
+  .pagination-ellipsis {
+    @apply flex h-8 w-8 items-center justify-center font-mono text-xs text-faint;
+  }
+
+  .pagination-info {
+    @apply font-mono text-[10px] text-faint;
+  }
+
+  /* 주의 로그 분석 목록 — 행 인라인 아코디언 */
+  .accordion-panel {
+    @apply mx-4 mb-3 overflow-hidden rounded border border-line/60 bg-surface-3;
+  }
+
+  .accordion-head {
+    @apply flex items-center gap-2 border-b border-line/60 px-4 py-2;
+  }
+
+  .accordion-head-label {
+    @apply font-mono text-[9px] uppercase tracking-[0.12em] text-primary;
+  }
+
+  .accordion-body {
+    @apply px-4 py-3;
+  }
+
+  .accordion-body p {
+    @apply m-0 whitespace-pre-line text-xs leading-relaxed text-[#9ca3af];
+  }
+
+  .accordion-chips {
+    @apply flex items-center gap-2 px-4 pb-3;
   }
 }

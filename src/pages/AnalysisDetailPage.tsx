@@ -31,7 +31,7 @@ export default function AnalysisDetailPage() {
 
   return (
     <div className="detail-page">
-      <div className="screen-header">
+      <div className="page-header justify-start">
         <Link className="detail-back" to="/analyses">
           <ArrowLeft size={14} />
           <span>주의 로그 분석</span>

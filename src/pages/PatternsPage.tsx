@@ -1,6 +1,7 @@
 import { Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import { listPatterns } from "../api/patterns";
+import { PageHeader } from "../components/layout/PageHeader";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
 import { riskMeta } from "../domain/constants";
@@ -38,16 +39,12 @@ export default function PatternsPage() {
 
   return (
     <div className="screen">
-      <div className="screen-header">
-        <div>
-          <div className="screen-header-title">
-            <Activity size={15} />
-            <span>패턴 클러스터</span>
-            <span className="count-chip">{patterns.length}개 클러스터</span>
-          </div>
-          <p className="screen-header-note">구조적 템플릿 기반으로 그룹화된 반복 로그 패턴입니다.</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Activity}
+        title="패턴 클러스터"
+        chip={<span className="count-chip">{patterns.length}개 클러스터</span>}
+        note="구조적 템플릿 기반으로 그룹화된 반복 로그 패턴입니다."
+      />
       {error && <ErrorState message={error} />}
       {loading && <LoadingState />}
       {!loading && !error && (
