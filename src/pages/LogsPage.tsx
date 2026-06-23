@@ -21,41 +21,47 @@ const levelOptions = [
   { value: "INFO", label: "INFO" },
 ];
 
+const pageSize = 20;
+
 export default function LogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [level, setLevel] = useState("ALL");
   const [keyword, setKeyword] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({ selectedDate: "", recent24h: true });
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(1); // 1-base(UI). 백엔드 Pageable은 0-base라 호출 시 -1.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 캘린더에 점 표시용 — 로그 timestamp의 날짜부분(YYYY-MM-DD)만 모은다.
-  const activeDates = new Set(logs.map((log) => String(log.timestamp).slice(0, 10)));
-
-  const pageSize = 20;
-  const totalPages = Math.max(1, Math.ceil(logs.length / pageSize));
+  // 캘린더에 점 표시용 — 로그 occurredAt의 날짜부분(YYYY-MM-DD)만 모은다.
+  const activeDates = new Set(logs.map((log) => String(log.occurredAt).slice(0, 10)));
 
   useEffect(() => {
     setLoading(true);
-    listLogs({ level, keyword })
+    // TODO(filter): level/keyword/dateFilter를 LogQuery(LogSearchCondition)로 전달.
+    //   현재는 page/size만 서버에 보내고 필터 UI는 화면 유지용으로만 둔다.
+    listLogs({ page: page - 1, size: pageSize })
       .then((response) => {
         setLogs(response.items);
+        setTotal(response.total);
+        setTotalPages(Math.max(1, response.totalPages));
         setError(null);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
       .finally(() => setLoading(false));
-  }, [level, keyword]);
+  }, [page]);
 
   return (
     <div className="screen">
       <PageHeader
         icon={List}
         title="시스템 로그"
-        chip={<span className="count-chip">{logs.length}</span>}
+        chip={<span className="count-chip">{total}</span>}
         note="최근 24시간 수집 로그"
         actions={
           <>
+            {/* TODO(filter): 아래 컨트롤들은 아직 서버 필터에 연결되지 않음(화면 유지용). */}
             <FilterSelect label="Level" value={level} options={levelOptions} onChange={setLevel} />
             <DateFilter value={dateFilter} activeDates={activeDates} onChange={setDateFilter} />
             <label className="search-control">
@@ -85,18 +91,21 @@ export default function LogsPage() {
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => {
-                  const abnormal = isAbnormalLog(log);
+                {logs.map((log, index) => {
+                  // isAbnormalLog는 { level, isAbnormal } 형태를 받음(constants.ts SSOT, 수정 금지).
+                  const abnormal = isAbnormalLog({ level: log.logLevel });
+                  // # 컬럼: 백엔드에 lineNumber가 없어 페이지 기준 일련번호로 파생.
+                  const rowNumber = (page - 1) * pageSize + index + 1;
                   return (
-                    <tr key={log.id}>
+                    <tr key={log.logId}>
                       <td>{abnormal && <span className="row-marker" />}</td>
-                      <td className="text-faint">{log.lineNumber}</td>
+                      <td className="text-faint">{rowNumber}</td>
                       <td><StatusDot abnormal={abnormal} /></td>
                       <td>{log.node}</td>
-                      <td className="whitespace-nowrap text-muted">{log.timestamp}</td>
+                      <td className="whitespace-nowrap text-muted">{log.occurredAt}</td>
                       <td>{log.component}</td>
-                      <td><LevelBadge value={log.level} /></td>
-                      <td className="wide">{log.message}</td>
+                      <td><LevelBadge value={log.logLevel} /></td>
+                      <td className="wide">{log.content}</td>
                     </tr>
                   );
                 })}
@@ -106,7 +115,7 @@ export default function LogsPage() {
           <Pagination
             page={page}
             totalPages={totalPages}
-            totalItems={logs.length}
+            totalItems={total}
             pageSize={pageSize}
             onChange={setPage}
           />
