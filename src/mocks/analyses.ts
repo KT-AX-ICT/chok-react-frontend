@@ -1,123 +1,191 @@
-import type { AnalysisDetail, AnalysisSummary } from "../domain/analyses/types";
-import { mockLogs } from "./logs";
+import type {
+  AnalysisDetail,
+  AnalysisLogInfo,
+  AnalysisSummary,
+} from "../domain/analyses/types";
 
+// 상세 mock — 분석 엔티티(LogAnalysis) 기준으로 직접 정의.
+// 백엔드 detail API가 아직 없어(보류) entity 필드를 그대로 채운다.
+// clusterId: 패턴 클러스터 번호(미분류=99). responsePlan: action을 줄 단위로 파싱한 결과.
 export const mockAnalysisDetails: AnalysisDetail[] = [
   {
-    id: 101,
-    logId: 2,
-    lineNumber: 9,
-    label: "APPREAD",
-    node: "R04-M1-N",
-    timestamp: "2026-06-04 01:14:32",
+    analysisId: 101,
+    domain: "BGL",
     riskLevel: "높음",
-    status: "COMPLETED",
-    reason: "BGL 라벨이 APPREAD로 표시된 이상 로그이며, FATAL 레벨의 ciod IPC 실패가 포함되어 있습니다.",
-    contentAnalysis:
+    aiSummary:
+      "ciod 프로세스가 fork 직후 IPC 메시지 프리픽스 읽기에 실패한 이상 로그입니다.",
+    analysis:
       "ciod 프로세스가 fork 이후 메시지 프리픽스 읽기에 실패했습니다. 프로세스 간 통신 채널이 비정상 종료되었거나 소켓 연결이 끊긴 상황으로 볼 수 있습니다.",
-    responseAction:
-      "1. R04-M1-N 노드의 ciod 로그를 수집합니다.\n2. 동일 이벤트가 반복되면 해당 노드의 메모리와 네트워크 스택을 점검합니다.\n3. 실행 중이던 배치 잡 ID를 확인해 재제출 여부를 결정합니다.",
-    patternId: "P-CIOD",
-    relatedPattern: {
-      id: "P-CIOD",
-      title: "프로세스 통신 장애",
-      description: "ciod IPC 오류와 OOM 이벤트가 야간 배치 시간대에 반복되는 패턴입니다.",
+    responsePlan: [
+      "R04-M1-N 노드의 ciod 로그를 수집합니다.",
+      "동일 이벤트가 반복되면 해당 노드의 메모리와 네트워크 스택을 점검합니다.",
+      "실행 중이던 배치 잡 ID를 확인해 재제출 여부를 결정합니다.",
+    ],
+    clusterId: 7,
+    analyzedAt: "2026-06-04 01:14:40",
+    log: {
+      logId: 2,
+      occurredAt: "2026-06-04 01:14:32",
+      node: "R04-M1-N",
+      component: "CIOD",
+      logType: "RAS",
+      logLevel: "FATAL",
+      label: "APPREAD",
+      content:
+        "ciod: failed to read message prefix on control stream (CioStream socket to 172.16.96.116:33934)",
+      isCaution: true,
     },
-    log: mockLogs[1],
   },
   {
-    id: 102,
-    logId: 3,
-    lineNumber: 10,
-    label: "SECURITY",
-    node: "R11-M2-N",
-    timestamp: "2026-06-04 02:31:45",
+    analysisId: 102,
+    domain: "BGL",
     riskLevel: "긴급",
-    status: "COMPLETED",
-    reason: "BGL 라벨이 SECURITY로 표시된 이상 로그이며, 커널 제어 파일에 대한 무단 접근 시도가 기록되었습니다.",
-    contentAnalysis:
+    aiSummary:
+      "커널 제어 파일 /proc/sysrq-trigger에 대한 무단 접근 시도가 기록된 보안 이상 로그입니다.",
+    analysis:
       "/proc/sysrq-trigger는 커널 수준 명령을 직접 실행할 수 있는 경로입니다. 무단 접근이 성공하면 강제 재부팅이나 파일 시스템 동기화 등 시스템 전체에 영향을 줄 수 있습니다.",
-    responseAction:
-      "1. 보안팀에 즉시 에스컬레이션합니다.\n2. R11-M2-N 접근 계정과 세션을 감사합니다.\n3. auditd 로그를 수집해 접근 주체를 특정합니다.",
-    patternId: "P-SECURITY",
-    relatedPattern: {
-      id: "P-SECURITY",
-      title: "보안 위협 집중 발생",
-      description: "무단 접근, 권한 상승, 인증 실패가 근접 시간대에 함께 발생합니다.",
+    responsePlan: [
+      "보안팀에 즉시 에스컬레이션합니다.",
+      "R11-M2-N 접근 계정과 세션을 감사합니다.",
+      "auditd 로그를 수집해 접근 주체를 특정합니다.",
+    ],
+    clusterId: 12,
+    analyzedAt: "2026-06-04 02:31:52",
+    log: {
+      logId: 3,
+      occurredAt: "2026-06-04 02:31:45",
+      node: "R11-M2-N",
+      component: "KERNEL",
+      logType: "RAS",
+      logLevel: "FATAL",
+      label: "SECURITY",
+      content:
+        "unauthorized access attempt to /proc/sysrq-trigger detected from uid=0 session",
+      isCaution: true,
     },
-    log: mockLogs[2],
   },
   {
-    id: 103,
-    logId: 4,
-    lineNumber: 11,
-    label: "CRITICAL",
-    node: "R07-M0-N",
-    timestamp: "2026-06-04 03:45:11",
+    analysisId: 103,
+    domain: "BGL",
     riskLevel: "긴급",
-    status: "COMPLETED",
-    reason: "BGL 라벨이 CRITICAL로 표시된 이상 로그이며, 머신 체크 예외와 CPU 열 쓰로틀링이 함께 기록되었습니다.",
-    contentAnalysis:
+    aiSummary:
+      "CPU 열 쓰로틀링과 함께 머신 체크 예외(MCE)가 발생한 하드웨어 이상 로그입니다.",
+    analysis:
       "CPU 열 쓰로틀링으로 인한 머신 체크 예외는 냉각 시스템 이상 또는 CPU 과부하 가능성을 나타냅니다. 방치하면 노드 장애나 데이터 손상으로 이어질 수 있습니다.",
-    responseAction:
-      "1. 하드웨어팀에 노드 점검을 요청합니다.\n2. IPMI/BMC에서 CPU 온도를 확인합니다.\n3. 해당 노드의 워크로드를 다른 노드로 이동합니다.",
-    patternId: "P-HARDWARE",
-    relatedPattern: {
-      id: "P-HARDWARE",
-      title: "하드웨어 장애 예고",
-      description: "정정 가능 오류가 누적된 뒤 MCE로 에스컬레이션되는 패턴입니다.",
+    responsePlan: [
+      "하드웨어팀에 노드 점검을 요청합니다.",
+      "IPMI/BMC에서 CPU 온도를 확인합니다.",
+      "해당 노드의 워크로드를 다른 노드로 이동합니다.",
+    ],
+    clusterId: 5,
+    analyzedAt: "2026-06-04 03:45:18",
+    log: {
+      logId: 4,
+      occurredAt: "2026-06-04 03:45:11",
+      node: "R07-M0-N",
+      component: "KERNEL",
+      logType: "RAS",
+      logLevel: "FATAL",
+      label: "CRITICAL",
+      content:
+        "machine check: CPU thermal throttling event, core temperature exceeded threshold",
+      isCaution: true,
     },
-    log: mockLogs[3],
   },
   {
-    id: 104,
-    logId: 5,
-    lineNumber: 12,
-    label: "NETWORK",
-    node: "R15-M3-N",
-    timestamp: "2026-06-04 04:02:58",
+    analysisId: 104,
+    domain: "BGL",
     riskLevel: "높음",
-    status: "COMPLETED",
-    reason: "BGL 라벨이 NETWORK로 표시된 이상 로그이며, eth0 링크 다운이 재시도 후에도 복구되지 않았습니다.",
-    contentAnalysis:
+    aiSummary:
+      "eth0 링크 다운이 3회 재시도 후에도 복구되지 않은 네트워크 이상 로그입니다.",
+    analysis:
       "네트워크 인터페이스 eth0가 3회 재시도 후 링크 다운 상태에 진입했습니다. 케이블, 스위치 포트, NIC 드라이버 문제 가능성이 있습니다.",
-    responseAction:
-      "1. 물리 케이블과 스위치 포트를 점검합니다.\n2. ethtool로 NIC 상태를 확인합니다.\n3. 백업 네트워크 경로를 활성화합니다.",
-    patternId: "P-NETWORK",
-    relatedPattern: {
-      id: "P-NETWORK",
-      title: "네트워크 링크 실패",
-      description: "재시도 초과 이후 네트워크 인터페이스 링크 다운이 발생하는 패턴입니다.",
+    responsePlan: [
+      "물리 케이블과 스위치 포트를 점검합니다.",
+      "ethtool로 NIC 상태를 확인합니다.",
+      "백업 네트워크 경로를 활성화합니다.",
+    ],
+    clusterId: 9,
+    analyzedAt: "2026-06-04 04:03:05",
+    log: {
+      logId: 5,
+      occurredAt: "2026-06-04 04:02:58",
+      node: "R15-M3-N",
+      component: "MMCS",
+      logType: "RAS",
+      logLevel: "ERROR",
+      label: "NETWORK",
+      content: "eth0: link down after 3 retries, network interface unreachable",
+      isCaution: true,
     },
-    log: mockLogs[4],
   },
   {
-    id: 105,
-    logId: 6,
-    lineNumber: 18,
-    label: "CRITICAL",
-    node: "R13-M0-N",
-    timestamp: "2026-06-05 07:55:01",
+    analysisId: 105,
+    domain: "BGL",
     riskLevel: "높음",
-    status: "COMPLETED",
-    reason: "BGL 라벨이 CRITICAL로 표시된 이상 로그이며, OOM killer가 프로세스를 강제 종료했습니다.",
-    contentAnalysis:
+    aiSummary:
+      "OOM killer가 메모리 압박으로 프로세스를 강제 종료한 이상 로그입니다.",
+    analysis:
       "OOM score 998은 메모리 압박이 매우 컸음을 의미합니다. 직전 애플리케이션의 메모리 누수나 과도한 할당이 있었을 가능성이 높습니다.",
-    responseAction:
-      "1. 종료된 프로세스의 담당 애플리케이션을 확인합니다.\n2. OOM 직전 메모리 사용 추이를 분석합니다.\n3. cgroup 메모리 상한이나 워크로드 재분산을 검토합니다.",
-    patternId: "P-CIOD",
-    log: mockLogs[5],
+    responsePlan: [
+      "종료된 프로세스의 담당 애플리케이션을 확인합니다.",
+      "OOM 직전 메모리 사용 추이를 분석합니다.",
+      "cgroup 메모리 상한이나 워크로드 재분산을 검토합니다.",
+    ],
+    clusterId: 7,
+    analyzedAt: "2026-06-05 07:55:09",
+    log: {
+      logId: 6,
+      occurredAt: "2026-06-05 07:55:01",
+      node: "R13-M0-N",
+      component: "KERNEL",
+      logType: "RAS",
+      logLevel: "FATAL",
+      label: "CRITICAL",
+      content:
+        "Out of memory: Killed process 18342 (app_worker) total-vm:8421376kB, oom_score:998",
+      isCaution: true,
+    },
+  },
+  {
+    analysisId: 106,
+    domain: "BGL",
+    riskLevel: "보통",
+    aiSummary:
+      "torus 네트워크에서 정정 가능한 단일 비트 오류가 임계치 근처로 누적된 로그입니다.",
+    analysis:
+      "정정 가능 오류(correctable error)는 즉시 장애를 일으키지 않지만 누적되면 정정 불가 오류로 전이될 수 있습니다. 추세 감시가 필요합니다.",
+    responsePlan: [
+      "해당 링크의 정정 가능 오류 카운터 추이를 모니터링합니다.",
+      "오류율이 계속 상승하면 케이블/커넥터 교체를 검토합니다.",
+    ],
+    clusterId: 99,
+    analyzedAt: "2026-06-05 09:12:30",
+    log: {
+      logId: 7,
+      occurredAt: "2026-06-05 09:12:22",
+      node: "R09-M1-N",
+      component: "TORUS",
+      logType: "RAS",
+      logLevel: "WARN",
+      label: "GENERAL",
+      content:
+        "correctable single bit error count approaching threshold on torus link x+",
+      isCaution: false,
+    },
   },
 ];
 
-export const mockAnalyses: AnalysisSummary[] = mockAnalysisDetails.map((detail) => ({
-  id: detail.id,
-  logId: detail.logId,
-  lineNumber: detail.lineNumber,
-  label: detail.label,
-  node: detail.node,
-  timestamp: detail.timestamp,
-  riskLevel: detail.riskLevel,
-  status: detail.status,
-  reason: detail.reason,
-  patternId: detail.patternId,
-}));
+// 목록 mock — 상세에서 AnalysisDto(목록 항목) 필드만 추려 파생.
+export const mockAnalyses: AnalysisSummary[] = mockAnalysisDetails.map(
+  (detail): AnalysisSummary => ({
+    analysisId: detail.analysisId,
+    domain: detail.domain,
+    riskLevel: detail.riskLevel,
+    aiSummary: detail.aiSummary,
+    analysis: detail.analysis,
+    responsePlan: detail.responsePlan,
+    log: { ...detail.log } satisfies AnalysisLogInfo,
+    clusterId: detail.clusterId, // 데모용(실제 AnalysisDto 응답엔 없음 — types.ts TODO 참조)
+  }),
+);

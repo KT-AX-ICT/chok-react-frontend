@@ -5,9 +5,11 @@ import { getAnalysisDetail } from "../api/analyses";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
 import { LabelBadge } from "../components/domain/LabelBadge";
-import { LevelBadge } from "../components/domain/LevelBadge";
 import { RiskBadge } from "../components/domain/RiskBadge";
 import type { AnalysisDetail } from "../domain/analyses/types";
+
+// 패턴 클러스터 미분류 번호(백엔드 LogAnalysis.clusterId 기본값).
+const UNCLUSTERED = 99;
 
 export default function AnalysisDetailPage() {
   const { analysisId } = useParams();
@@ -29,6 +31,8 @@ export default function AnalysisDetailPage() {
   if (error) return <ErrorState message={error} />;
   if (!detail) return <LoadingState />;
 
+  const hasCluster = detail.clusterId !== undefined && detail.clusterId !== UNCLUSTERED;
+
   return (
     <div className="detail-page">
       <div className="page-header justify-start">
@@ -37,8 +41,8 @@ export default function AnalysisDetailPage() {
           <span>주의 로그 분석</span>
         </Link>
         <span className="font-mono text-xs text-faint">/</span>
-        <span className="font-mono text-xs text-text-main">LOG #{detail.log.lineNumber}</span>
-        <LabelBadge value={detail.label} />
+        <span className="font-mono text-xs text-text-main">LOG #{detail.log.logId}</span>
+        <LabelBadge value={detail.log.label} />
       </div>
 
       <div className="detail-content scrollbar-hide">
@@ -47,33 +51,34 @@ export default function AnalysisDetailPage() {
             <p className="card-title">원본 로그</p>
             <dl className="detail-kv">
               <dt>Node</dt><dd>{detail.log.node}</dd>
-              <dt>Time</dt><dd>{detail.log.timestamp}</dd>
+              <dt>Time</dt><dd>{detail.log.occurredAt}</dd>
               <dt>Component</dt><dd>{detail.log.component}</dd>
-              <dt>Level</dt><dd><LevelBadge value={detail.log.level} /></dd>
-              <dt>EventId</dt><dd>{detail.log.eventId}</dd>
-              <dt>Content</dt><dd>{detail.log.message}</dd>
-              <dt>Template</dt><dd>{detail.log.eventTemplate}</dd>
+              <dt>Type</dt><dd>{detail.log.logType}</dd>
+              <dt>Level</dt><dd><span className="badge muted">{detail.log.logLevel}</span></dd>
+              <dt>Content</dt><dd>{detail.log.content}</dd>
             </dl>
           </div>
 
-          {detail.relatedPattern && (
+          {hasCluster && (
             <div className="detail-card primary">
               <p className="card-title">패턴 클러스터</p>
               <div className="inline-head mb-2 justify-start">
-                <span className="tone-chip bg-primary/10 text-primary">{detail.relatedPattern.id}</span>
-                <strong>{detail.relatedPattern.title}</strong>
+                <span className="tone-chip bg-primary/10 text-primary">#{detail.clusterId}</span>
+                <strong>패턴 클러스터 {detail.clusterId}</strong>
               </div>
-              <p className="long-text text-xs">{detail.relatedPattern.description}</p>
+              <p className="long-text text-xs">
+                동일 패턴(클러스터 #{detail.clusterId})으로 분류된 로그입니다.
+              </p>
             </div>
           )}
 
           <div className="detail-card">
             <div className="inline-head mb-3 justify-start">
               <Brain size={13} className="text-primary" />
-              <p className="card-title m-0">위험도</p>
+              <p className="card-title m-0">위험도 · AI 요약</p>
             </div>
             <RiskBadge value={detail.riskLevel} />
-            <p className="long-text mt-3 text-[13px]">{detail.reason}</p>
+            <p className="long-text mt-3 text-[13px]">{detail.aiSummary}</p>
           </div>
 
           <div className="detail-card">
@@ -81,7 +86,7 @@ export default function AnalysisDetailPage() {
               <Brain size={13} className="text-primary" />
               <p className="card-title m-0">로그 내용 분석</p>
             </div>
-            <p className="long-text">{detail.contentAnalysis}</p>
+            <p className="long-text">{detail.analysis}</p>
           </div>
 
           <div className="detail-card primary">
@@ -89,7 +94,11 @@ export default function AnalysisDetailPage() {
               <CheckCircle size={13} className="text-primary" />
               <p className="card-title m-0">대응 방안</p>
             </div>
-            <p className="long-text pre-line">{detail.responseAction}</p>
+            <ol className="response-plan long-text">
+              {detail.responsePlan.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ol>
           </div>
         </div>
       </div>
