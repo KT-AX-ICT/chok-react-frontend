@@ -26,18 +26,19 @@ export interface DashboardViewModel {
 }
 
 export function toDashboardViewModel(response: DashboardResponse): DashboardViewModel {
+  // 백엔드가 분포 배열을 null로 내려줄 수 있어 빈 배열로 방어한다(.map 호출 안전).
   return {
-    timeSeries: response.timeSeries.map((item) => ({
+    timeSeries: (response.timeSeries ?? []).map((item) => ({
       label: hourLabel(item.time),
       total: item.totalCount,
       caution: item.cautionCount,
     })),
-    riskDistribution: response.riskDistribution.map((item) => ({
+    riskDistribution: (response.riskDistribution ?? []).map((item) => ({
       riskLevel: item.riskLevel,
       count: item.count,
       color: riskColorOf(item.riskLevel),
     })),
-    componentBars: response.componentDistribution.map((item) => ({
+    componentBars: (response.componentDistribution ?? []).map((item) => ({
       component: item.component,
       count: item.count,
     })),
