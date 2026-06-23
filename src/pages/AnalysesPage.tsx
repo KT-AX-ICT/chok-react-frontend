@@ -83,7 +83,11 @@ export default function AnalysesPage() {
     const kw = keyword.trim().toLowerCase();
     return items
       .filter((item) => riskLevel === "ALL" || item.riskLevel === riskLevel)
-      .filter((item) => !date || item.log.occurredAt.slice(0, 10) === date)
+      .filter((item) => {
+        // 날짜 선택 시 그 하루, 미선택(최근 24시간) 시 현재 시각 기준 24시간 이내.
+        if (date) return item.log.occurredAt.slice(0, 10) === date;
+        return new Date(item.log.occurredAt).getTime() >= Date.now() - 24 * 60 * 60 * 1000;
+      })
       .filter((item) => {
         if (!kw) return true;
         return [item.log.label, item.log.node, item.aiSummary].some((value) =>

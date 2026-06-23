@@ -26,10 +26,18 @@ const levelOptions = [
 
 const pageSize = 20;
 
-// "YYYY-MM-DD" → 하루 범위(서버 startAt/endAt). 빈 값이면 null(백엔드 기본 = 최근 24h).
-function dayRange(date: string) {
-  if (!date) return null;
-  return { startAt: `${date}T00:00:00`, endAt: `${date}T23:59:59` };
+// Date → 로컬 ISO LocalDateTime("YYYY-MM-DDTHH:mm:ss", 타임존/밀리초 없음 — 백엔드 LocalDateTime 형식).
+function toLocalIso(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+// 조회 범위. 날짜 선택 시 그 하루, 미선택(최근 24시간) 시 "현재 시각 기준 24시간 전 ~ 지금".
+// (백엔드 기본값에 맡기면 전체가 내려오므로 항상 명시적으로 범위를 보낸다.)
+function rangeFor(date: string) {
+  if (date) return { startAt: `${date}T00:00:00`, endAt: `${date}T23:59:59` };
+  const now = new Date();
+  return { startAt: toLocalIso(new Date(now.getTime() - 24 * 60 * 60 * 1000)), endAt: toLocalIso(now) };
 }
 
 export default function LogsPage() {
@@ -65,14 +73,14 @@ export default function LogsPage() {
 
   useEffect(() => {
     setLoading(true);
-    const range = dayRange(date);
+    const range = rangeFor(date);
     listLogs({
       page: page - 1,
       size: pageSize,
       logLevel: level !== "ALL" ? level : undefined,
       keyword: keyword || undefined,
-      startAt: range?.startAt,
-      endAt: range?.endAt,
+      startAt: range.startAt,
+      endAt: range.endAt,
     })
       .then((response) => {
         setLogs(response.items);
