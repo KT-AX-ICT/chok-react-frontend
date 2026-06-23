@@ -3,7 +3,6 @@ import type { LogEntry, LogListResponse } from "../domain/log/types";
 import { mockLogs } from "../mocks/logs";
 
 export interface LogQuery {
-  label?: string;
   level?: string;
   keyword?: string;
 }
@@ -12,7 +11,6 @@ export async function listLogs(query: LogQuery = {}): Promise<LogListResponse> {
   if (USE_MOCKS) {
     const keyword = query.keyword?.trim().toLowerCase();
     const items = mockLogs
-      .filter((log) => !query.label || query.label === "ALL" || log.label === query.label)
       .filter((log) => !query.level || query.level === "ALL" || log.level === query.level)
       .filter((log) => {
         if (!keyword) return true;

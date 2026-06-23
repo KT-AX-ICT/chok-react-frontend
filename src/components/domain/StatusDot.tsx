@@ -1,10 +1,7 @@
-import { isAnomalyLabel } from "../../domain/constants";
-
 interface StatusDotProps {
-  label: string;
+  abnormal: boolean;
 }
 
-export function StatusDot({ label }: StatusDotProps) {
-  const anomaly = isAnomalyLabel(label);
-  return <span className={`status-dot ${anomaly ? "danger" : "success"}`} title={anomaly ? "이상 로그" : "정상 로그"} />;
+export function StatusDot({ abnormal }: StatusDotProps) {
+  return <span className={`status-dot ${abnormal ? "danger" : "success"}`} title={abnormal ? "이상 로그" : "정상 로그"} />;
 }

@@ -1,9 +1,8 @@
-export type LogLevel = "INFO" | "WARN" | "ERROR" | "FATAL" | "DEBUG";
+export type LogLevel = "INFO" | "FATAL" | "ERROR" | "WARNING" | "SEVERE";
 
 export interface LogEntry {
   id: number;
   lineNumber: number;
-  label: string;
   node: string;
   timestamp: string;
   component: string;
@@ -11,6 +10,8 @@ export interface LogEntry {
   eventId: string;
   message: string;
   eventTemplate: string;
+  // 정상/이상 판정: 추후 API의 is_abnormal 응답을 매핑. 미제공 시 level === "FATAL"로 대체(isAbnormalLog).
+  isAbnormal?: boolean;
 }
 
 export interface LogListResponse {

@@ -4,7 +4,6 @@ export const mockLogs: LogEntry[] = [
   {
     id: 1,
     lineNumber: 1,
-    label: "-",
     node: "R02-M1-N",
     timestamp: "2026-06-03 00:00:11",
     component: "KERNEL",
@@ -16,7 +15,6 @@ export const mockLogs: LogEntry[] = [
   {
     id: 2,
     lineNumber: 9,
-    label: "APPREAD",
     node: "R04-M1-N",
     timestamp: "2026-06-04 01:14:32",
     component: "APP",
@@ -28,11 +26,10 @@ export const mockLogs: LogEntry[] = [
   {
     id: 3,
     lineNumber: 10,
-    label: "SECURITY",
     node: "R11-M2-N",
     timestamp: "2026-06-04 02:31:45",
     component: "KERNEL",
-    level: "WARN",
+    level: "WARNING",
     eventId: "E91",
     message: "unauthorized access attempt on /proc/sysrq-trigger",
     eventTemplate: "unauthorized access attempt on <*>",
@@ -40,7 +37,6 @@ export const mockLogs: LogEntry[] = [
   {
     id: 4,
     lineNumber: 11,
-    label: "CRITICAL",
     node: "R07-M0-N",
     timestamp: "2026-06-04 03:45:11",
     component: "KERNEL",
@@ -52,7 +48,6 @@ export const mockLogs: LogEntry[] = [
   {
     id: 5,
     lineNumber: 12,
-    label: "NETWORK",
     node: "R15-M3-N",
     timestamp: "2026-06-04 04:02:58",
     component: "KERNEL",
@@ -64,7 +59,6 @@ export const mockLogs: LogEntry[] = [
   {
     id: 6,
     lineNumber: 18,
-    label: "CRITICAL",
     node: "R13-M0-N",
     timestamp: "2026-06-05 07:55:01",
     component: "APP",
