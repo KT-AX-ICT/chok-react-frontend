@@ -14,10 +14,10 @@ import type { AnalysisSummary } from "../domain/analyses/types";
 
 const riskOptions = [
   { value: "ALL", label: "전체 위험도" },
-  { value: "CRITICAL", label: "긴급" },
-  { value: "HIGH", label: "높음" },
-  { value: "MEDIUM", label: "보통" },
-  { value: "LOW", label: "낮음" },
+  { value: "긴급", label: "긴급" },
+  { value: "높음", label: "높음" },
+  { value: "보통", label: "보통" },
+  { value: "낮음", label: "낮음" },
 ];
 
 const PAGE_SIZE = 20;

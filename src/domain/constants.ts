@@ -1,11 +1,11 @@
 import type { LogLevel } from "./log/types";
-import type { RiskLevel } from "./analyses/types";
+import type { RiskLevel } from "./risk";
 
 export const riskMeta: Record<RiskLevel, { label: string; tone: string; order: number }> = {
-  LOW: { label: "낮음", tone: "success", order: 4 },
-  MEDIUM: { label: "보통", tone: "warning", order: 3 },
-  HIGH: { label: "높음", tone: "orange", order: 2 },
-  CRITICAL: { label: "긴급", tone: "danger", order: 1 },
+  긴급: { label: "긴급", tone: "danger", order: 1 },
+  높음: { label: "높음", tone: "orange", order: 2 },
+  보통: { label: "보통", tone: "warning", order: 3 },
+  낮음: { label: "낮음", tone: "success", order: 4 },
 };
 
 export const levelMeta: Record<LogLevel, { label: string; tone: string }> = {
@@ -14,6 +14,7 @@ export const levelMeta: Record<LogLevel, { label: string; tone: string }> = {
   ERROR: { label: "ERROR", tone: "orange" },
   FATAL: { label: "FATAL", tone: "danger" },
   SEVERE: { label: "SEVERE", tone: "danger" },
+  FAILURE: { label: "FAILURE", tone: "danger" },
 };
 
 // 시스템 정상/이상 판정: FATAL 기반(1차 필터). 추후 API가 is_abnormal을 주면 그 값이 우선.

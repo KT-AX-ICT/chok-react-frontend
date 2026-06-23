@@ -436,10 +436,10 @@
     @apply border-b border-l-2 border-b-white/[0.035] border-l-faint;
   }
 
-  .analysis-row-wrap.risk-CRITICAL { @apply border-l-danger; }
-  .analysis-row-wrap.risk-HIGH { @apply border-l-orange; }
-  .analysis-row-wrap.risk-MEDIUM { @apply border-l-warning; }
-  .analysis-row-wrap.risk-LOW { @apply border-l-success; }
+  .analysis-row-wrap.risk-긴급 { @apply border-l-danger; }
+  .analysis-row-wrap.risk-높음 { @apply border-l-orange; }
+  .analysis-row-wrap.risk-보통 { @apply border-l-warning; }
+  .analysis-row-wrap.risk-낮음 { @apply border-l-success; }
 
   .analysis-row {
     @apply px-4 py-2.5 font-mono text-[11px] text-[#9ca3af] hover:bg-surface-2;

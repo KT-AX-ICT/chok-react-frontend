@@ -1,6 +1,7 @@
 import type { LogEntry } from "../log/types";
 
-export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+import type { RiskLevel } from "../risk";
+export type { RiskLevel };
 export type AnalysisStatus = "COMPLETED" | "FAILED" | "RUNNING";
 
 export interface AnalysisSummary {

@@ -9,7 +9,7 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
     label: "APPREAD",
     node: "R04-M1-N",
     timestamp: "2026-06-04 01:14:32",
-    riskLevel: "HIGH",
+    riskLevel: "높음",
     status: "COMPLETED",
     reason: "BGL 라벨이 APPREAD로 표시된 이상 로그이며, FATAL 레벨의 ciod IPC 실패가 포함되어 있습니다.",
     contentAnalysis:
@@ -31,7 +31,7 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
     label: "SECURITY",
     node: "R11-M2-N",
     timestamp: "2026-06-04 02:31:45",
-    riskLevel: "CRITICAL",
+    riskLevel: "긴급",
     status: "COMPLETED",
     reason: "BGL 라벨이 SECURITY로 표시된 이상 로그이며, 커널 제어 파일에 대한 무단 접근 시도가 기록되었습니다.",
     contentAnalysis:
@@ -53,7 +53,7 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
     label: "CRITICAL",
     node: "R07-M0-N",
     timestamp: "2026-06-04 03:45:11",
-    riskLevel: "CRITICAL",
+    riskLevel: "긴급",
     status: "COMPLETED",
     reason: "BGL 라벨이 CRITICAL로 표시된 이상 로그이며, 머신 체크 예외와 CPU 열 쓰로틀링이 함께 기록되었습니다.",
     contentAnalysis:
@@ -75,7 +75,7 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
     label: "NETWORK",
     node: "R15-M3-N",
     timestamp: "2026-06-04 04:02:58",
-    riskLevel: "HIGH",
+    riskLevel: "높음",
     status: "COMPLETED",
     reason: "BGL 라벨이 NETWORK로 표시된 이상 로그이며, eth0 링크 다운이 재시도 후에도 복구되지 않았습니다.",
     contentAnalysis:
@@ -97,7 +97,7 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
     label: "CRITICAL",
     node: "R13-M0-N",
     timestamp: "2026-06-05 07:55:01",
-    riskLevel: "HIGH",
+    riskLevel: "높음",
     status: "COMPLETED",
     reason: "BGL 라벨이 CRITICAL로 표시된 이상 로그이며, OOM killer가 프로세스를 강제 종료했습니다.",
     contentAnalysis:

@@ -1,4 +1,5 @@
-export type LogLevel = "INFO" | "FATAL" | "ERROR" | "WARNING" | "SEVERE";
+// Spring ENUM logLevel: INFO / WARNING / ERROR / FATAL / SEVERE / FAILURE (API 공통 규약)
+export type LogLevel = "INFO" | "WARNING" | "ERROR" | "FATAL" | "SEVERE" | "FAILURE";
 
 export interface LogEntry {
   id: number;

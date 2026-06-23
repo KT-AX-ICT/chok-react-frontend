@@ -4,23 +4,11 @@ import { listPatterns } from "../api/patterns";
 import { PageHeader } from "../components/layout/PageHeader";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
-import { riskMeta } from "../domain/constants";
-import type { RiskLevel } from "../domain/analyses/types";
+import { RISK_ORDER, riskColor, riskToneClass } from "../domain/risk";
 import type { PatternSummary } from "../domain/patterns/types";
 
-const riskBars: Array<{ key: RiskLevel; color: string }> = [
-  { key: "CRITICAL", color: "#ef4444" },
-  { key: "HIGH", color: "#f97316" },
-  { key: "MEDIUM", color: "#f59e0b" },
-  { key: "LOW", color: "#10b981" },
-];
-
-const riskTextClass: Record<RiskLevel, string> = {
-  CRITICAL: "text-danger",
-  HIGH: "text-orange",
-  MEDIUM: "text-warning",
-  LOW: "text-success",
-};
+// 위험도 막대: SSOT(../risk)의 순서·색을 그대로 사용.
+const riskBars = RISK_ORDER.map((key) => ({ key, color: riskColor[key] }));
 
 export default function PatternsPage() {
   const [patterns, setPatterns] = useState<PatternSummary[]>([]);
@@ -73,7 +61,7 @@ export default function PatternsPage() {
                       const value = risk.key === pattern.riskLevel ? pattern.occurrences : 0;
                       return (
                         <div className="risk-bar" key={risk.key}>
-                          <span className={riskTextClass[risk.key]}>{riskMeta[risk.key].label}</span>
+                          <span className={riskToneClass[risk.key]}>{risk.key}</span>
                           <div className="risk-bar-track">
                             {value > 0 && <div className="risk-bar-fill" style={{ width: `${(value / max) * 100}%`, backgroundColor: risk.color }} />}
                           </div>

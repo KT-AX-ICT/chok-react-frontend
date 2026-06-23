@@ -1,8 +1,8 @@
 // Spring `domain.dashboard.dto.DashboardResponse`와 1:1로 맞춘 타입.
 // 필드명/형태는 Spring DTO를 SSOT로 따른다. 응답에 없는 값은 여기에 추가하지 않는다.
 
-// Spring ENUM riskLevel: 긴급 / 높음 / 보통 / 낮음 (PROJECT_CONTEXT API 공통 규약)
-export type RiskLevel = "긴급" | "높음" | "보통" | "낮음";
+// riskLevel SSOT는 src/domain/risk.ts. 여기서는 재노출만 한다.
+export type { RiskLevel } from "../risk";
 
 export interface DashboardRange {
   startAt: string;
