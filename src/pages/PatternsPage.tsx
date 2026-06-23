@@ -5,13 +5,13 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
 import { RISK_ORDER, riskColor, riskToneClass } from "../domain/risk";
-import type { PatternSummary } from "../domain/patterns/types";
+import type { PatternView } from "../domain/patterns/types";
 
 // 위험도 막대: SSOT(../risk)의 순서·색을 그대로 사용.
 const riskBars = RISK_ORDER.map((key) => ({ key, color: riskColor[key] }));
 
 export default function PatternsPage() {
-  const [patterns, setPatterns] = useState<PatternSummary[]>([]);
+  const [patterns, setPatterns] = useState<PatternView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,17 +38,20 @@ export default function PatternsPage() {
       {!loading && !error && (
         <div className="screen-scroll scrollbar-hide">
           <div className="pattern-grid">
-            {patterns.map((pattern, index) => {
-              const max = Math.max(pattern.occurrences, 1);
+            {patterns.map((pattern) => {
+              // 파생 필드(occurrences/riskLevel/firstSeen/lastSeen)는 PatternView entity에 없는
+              // 집계·분석 값이라 백엔드 미제공. 현재는 mock 값 기준으로 동작하며 없으면 폴백 처리.
+              const occurrences = pattern.occurrences ?? 0;
+              const max = Math.max(occurrences, 1);
               return (
                 <div key={pattern.id} className="pattern-card">
                   <div className="pattern-card-head">
                     <div>
-                      <small>클러스터 #{index + 1}</small>
-                      <h3>{pattern.title}</h3>
+                      <small>클러스터 #{pattern.id}</small>
+                      <h3>{pattern.patternName}</h3>
                     </div>
                     <span className="count-chip bg-primary/10 text-primary">
-                      {pattern.occurrences.toLocaleString()}회 발생
+                      {occurrences.toLocaleString()}회 발생
                     </span>
                   </div>
                   <p className="pattern-desc">{pattern.description}</p>
@@ -58,7 +61,7 @@ export default function PatternsPage() {
                   </div>
                   <div className="risk-bars">
                     {riskBars.map((risk) => {
-                      const value = risk.key === pattern.riskLevel ? pattern.occurrences : 0;
+                      const value = risk.key === pattern.riskLevel ? occurrences : 0;
                       return (
                         <div className="risk-bar" key={risk.key}>
                           <span className={riskToneClass[risk.key]}>{risk.key}</span>
@@ -71,8 +74,8 @@ export default function PatternsPage() {
                     })}
                   </div>
                   <div className="pattern-times">
-                    <span>첫 발생: {pattern.firstSeen}</span>
-                    <span>최근 발생: {pattern.lastSeen}</span>
+                    <span>첫 발생: {pattern.firstSeen ?? "-"}</span>
+                    <span>최근 발생: {pattern.lastSeen ?? "-"}</span>
                   </div>
                 </div>
               );
