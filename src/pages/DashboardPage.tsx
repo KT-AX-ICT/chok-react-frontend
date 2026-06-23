@@ -51,8 +51,8 @@ function AreaChart({ data }: { data: ChartPoint[] }) {
         const y = pad.top + chartHeight * (1 - tick);
         return (
           <g key={tick}>
-            {tick > 0 && <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#ffffff" strokeOpacity="0.04" />}
-            <text x={pad.left - 4} y={y + 3} textAnchor="end" fontSize="8" fill="#6b7280" fontFamily="JetBrains Mono">{Math.round(max * tick)}</text>
+            {tick > 0 && <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="var(--color-line)" />}
+            <text x={pad.left - 4} y={y + 3} textAnchor="end" fontSize="8" fill="var(--color-muted)" fontFamily="JetBrains Mono">{Math.round(max * tick)}</text>
           </g>
         );
       })}
@@ -61,7 +61,7 @@ function AreaChart({ data }: { data: ChartPoint[] }) {
       <polyline points={polyline(totalY)} fill="none" stroke="#00c8e8" strokeWidth="1.5" strokeLinejoin="round" />
       <polyline points={polyline(cautionY)} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
       {data.map((item, index) => index % 2 === 0 && (
-        <text key={`${item.label}-${index}`} x={xs[index]} y={height - 4} textAnchor="middle" fontSize="8" fill="#374151" fontFamily="JetBrains Mono">{item.label}</text>
+        <text key={`${item.label}-${index}`} x={xs[index]} y={height - 4} textAnchor="middle" fontSize="8" fill="var(--color-faint)" fontFamily="JetBrains Mono">{item.label}</text>
       ))}
     </svg>
   );
@@ -97,7 +97,7 @@ function DonutChart({ data }: { data: Array<{ riskLevel: string; count: number; 
             />
           );
         })}
-        <text x="50" y="53" textAnchor="middle" fontSize="11" fill="#9ca3af" fontFamily="JetBrains Mono">{total.toLocaleString()}</text>
+        <text x="50" y="53" textAnchor="middle" fontSize="11" fill="var(--color-text-soft)" fontFamily="JetBrains Mono">{total.toLocaleString()}</text>
       </svg>
     </div>
   );
