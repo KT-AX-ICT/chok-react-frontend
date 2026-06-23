@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { getDashboard } from "../api/dashboard";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingState } from "../components/common/LoadingState";
+import { EmptyState } from "../components/common/EmptyState";
+import { getApiErrorMessage } from "../api/client";
 import { riskToneClassOf, toDashboardViewModel } from "../domain/dashboard/adapter";
 import type { ChartPoint } from "../domain/dashboard/adapter";
 import type { DashboardResponse } from "../domain/dashboard/types";
@@ -108,13 +110,14 @@ export default function DashboardPage() {
   useEffect(() => {
     getDashboard()
       .then(setDashboard)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
+      .catch((err: unknown) => setError(getApiErrorMessage(err)));
   }, []);
 
   const view = useMemo(() => (dashboard ? toDashboardViewModel(dashboard) : null), [dashboard]);
 
   if (error) return <ErrorState message={error} />;
   if (!dashboard || !view) return <LoadingState />;
+  if (dashboard.stats.totalLogCount === 0) return <EmptyState message="표시할 데이터가 없습니다." />;
 
   const maxComponent = Math.max(...view.componentBars.map((item) => item.count), 1);
 

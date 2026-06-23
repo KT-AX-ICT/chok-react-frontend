@@ -1,17 +1,19 @@
 import { Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import { listPatterns } from "../api/patterns";
+import { getApiErrorMessage } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
+import { EmptyState } from "../components/common/EmptyState";
 import { RISK_ORDER, riskColor, riskToneClass } from "../domain/risk";
-import type { PatternView } from "../domain/patterns/types";
+import type { PatternSummary } from "../domain/patterns/types";
 
 // 위험도 막대: SSOT(../risk)의 순서·색을 그대로 사용.
 const riskBars = RISK_ORDER.map((key) => ({ key, color: riskColor[key] }));
 
 export default function PatternsPage() {
-  const [patterns, setPatterns] = useState<PatternView[]>([]);
+  const [patterns, setPatterns] = useState<PatternSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +23,7 @@ export default function PatternsPage() {
         setPatterns(response);
         setError(null);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -35,33 +37,35 @@ export default function PatternsPage() {
       />
       {error && <ErrorState message={error} />}
       {loading && <LoadingState />}
-      {!loading && !error && (
+      {!loading && !error && patterns.length === 0 && (
+        <EmptyState message="표시할 패턴이 없습니다." />
+      )}
+      {!loading && !error && patterns.length > 0 && (
         <div className="screen-scroll scrollbar-hide">
           <div className="pattern-grid">
             {patterns.map((pattern) => {
-              // 파생 필드(occurrences/riskLevel/firstSeen/lastSeen)는 PatternView entity에 없는
-              // 집계·분석 값이라 백엔드 미제공. 현재는 mock 값 기준으로 동작하며 없으면 폴백 처리.
-              const occurrences = pattern.occurrences ?? 0;
-              const max = Math.max(occurrences, 1);
+              const max = Math.max(pattern.count, 1);
               return (
-                <div key={pattern.id} className="pattern-card">
+                <div key={pattern.patternId} className="pattern-card">
                   <div className="pattern-card-head">
                     <div>
-                      <small>클러스터 #{pattern.id}</small>
+                      <small>클러스터 #{pattern.patternId}</small>
                       <h3>{pattern.patternName}</h3>
                     </div>
                     <span className="count-chip bg-primary/10 text-primary">
-                      {occurrences.toLocaleString()}회 발생
+                      {pattern.count.toLocaleString()}회 발생
                     </span>
                   </div>
                   <p className="pattern-desc">{pattern.description}</p>
                   <div className="pattern-template">
-                    <p>이벤트 템플릿</p>
-                    <code>{pattern.eventTemplate}</code>
+                    <p>대표 로그</p>
+                    <code>{pattern.representativeLog}</code>
                   </div>
                   <div className="risk-bars">
                     {riskBars.map((risk) => {
-                      const value = risk.key === pattern.riskLevel ? occurrences : 0;
+                      // 패턴 위험도(소속 분석 최고 위험도) 막대. 백엔드가 분포를 주지 않으므로
+                      // 해당 위험도 칸만 count로 채운다(단일 값 기준).
+                      const value = risk.key === pattern.riskLevel ? pattern.count : 0;
                       return (
                         <div className="risk-bar" key={risk.key}>
                           <span className={riskToneClass[risk.key]}>{risk.key}</span>
@@ -74,8 +78,8 @@ export default function PatternsPage() {
                     })}
                   </div>
                   <div className="pattern-times">
-                    <span>첫 발생: {pattern.firstSeen ?? "-"}</span>
-                    <span>최근 발생: {pattern.lastSeen ?? "-"}</span>
+                    <span>중요도 {pattern.importance}</span>
+                    <span>위험도 {pattern.riskLevel ?? "-"}</span>
                   </div>
                 </div>
               );

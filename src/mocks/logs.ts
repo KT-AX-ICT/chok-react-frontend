@@ -1,5 +1,5 @@
 import type { PageResponse } from "../api/client";
-import type { LogEntry } from "../domain/log/types";
+import type { LogDetail, LogEntry, LogRaw } from "../domain/log/types";
 
 // 백엔드 LogSummary(SSOT) 형태의 mock. BGL 로그 성격에 맞춘 현실적 값.
 // - label: 정상은 '-', 이상은 BGL 라벨(APPREAD/KERNDTLB 등)
@@ -97,3 +97,39 @@ export const mockLogPage: PageResponse<LogEntry> = {
   first: true,
   last: true,
 };
+
+// GET /api/v1/logs/{logId} 응답(LogDetail) 모사.
+// 목록 mock(LogSummary)에 상세 전용 필드 + 분석/패턴(분석 완료분만)을 덧붙인다.
+export function mockLogDetail(logId: number): LogDetail {
+  const summary = mockLogs.find((item) => item.logId === logId);
+  if (!summary) throw new Error(`Log ${logId} not found`);
+
+  const log: LogRaw = {
+    ...summary,
+    isAbnormal: summary.isAnalysis ? summary.label !== "-" : null,
+    nodeRepeat: summary.node,
+    eventId: `E${100 + summary.logId}`,
+  };
+
+  // 분석 미완료(isAnalysis=false 또는 riskLevel null)면 analysis/pattern은 null(분석 없음/분석 중).
+  if (!summary.isAnalysis || summary.riskLevel === null) {
+    return { log, analysis: null, pattern: null };
+  }
+
+  return {
+    log,
+    analysis: {
+      analysisId: 500 + summary.logId,
+      domain: "BGL",
+      riskLevel: summary.riskLevel,
+      aiSummary: `${summary.label} 이상 징후 요약(mock).`,
+      analysis: `${summary.node}에서 "${summary.content}" 가 관측되었습니다(mock 분석).`,
+      responsePlan: ["관련 노드 로그 수집", "동일 이벤트 재발 여부 모니터링", "필요 시 하드웨어/네트워크 점검"],
+    },
+    pattern: {
+      patternId: 10 + summary.logId,
+      patternName: `${summary.label} 패턴`,
+      representativeLog: summary.content,
+    },
+  };
+}

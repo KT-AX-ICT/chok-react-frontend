@@ -1,6 +1,6 @@
 import { apiClient, readData, USE_MOCKS, type PageResponse } from "./client";
-import type { LogEntry, LogListResponse } from "../domain/log/types";
-import { mockLogPage } from "../mocks/logs";
+import type { LogDetail, LogEntry, LogListResponse } from "../domain/log/types";
+import { mockLogDetail, mockLogPage } from "../mocks/logs";
 
 // 백엔드 LogSummary = 프론트 LogEntry(1:1). 목록 응답은 PageResponse<LogSummary>.
 type LogSummary = LogEntry;
@@ -8,9 +8,12 @@ type LogSummary = LogEntry;
 export interface LogQuery {
   page?: number; // 0-base (Spring Pageable)
   size?: number;
-  // TODO(filter): 백엔드 LogSearchCondition 연동 시 아래 파라미터 추가.
-  //   startAt, endAt, riskLevel, logType, component, logLevel, label, keyword, isCaution, isAnalysis
-  //   + Pageable.sort. 현재는 page/size만 전달한다.
+  startAt?: string; // ISO LocalDateTime. 미지정 시 백엔드가 최근 24h 사용.
+  endAt?: string;
+  logLevel?: string; // INFO/WARNING/ERROR/FATAL/SEVERE/FAILURE
+  keyword?: string; // content 부분검색
+  // TODO(filter): 잔여 LogSearchCondition(riskLevel/logType/component/label/isCaution/isAnalysis)
+  //   + Pageable.sort 는 화면 요구 확정 시 확장한다.
 }
 
 // PageResponse<LogSummary> → 화면용 LogListResponse 평탄화.
@@ -32,24 +35,22 @@ export async function listLogs(query: LogQuery = {}): Promise<LogListResponse> {
   const params: Record<string, unknown> = {};
   if (query.page !== undefined) params.page = query.page;
   if (query.size !== undefined) params.size = query.size;
-  // TODO(filter): LogSearchCondition 파라미터를 params에 병합.
+  if (query.startAt) params.startAt = query.startAt;
+  if (query.endAt) params.endAt = query.endAt;
+  if (query.logLevel) params.logLevel = query.logLevel;
+  if (query.keyword) params.keyword = query.keyword;
 
   const { data } = await apiClient.get<PageResponse<LogSummary>>("/api/v1/logs", { params });
   return toListResponse(data);
 }
 
-// TODO(detail-api): 백엔드 LogController에는 GET /logs(목록)만 존재하고
-//   상세(GET /logs/{id}) 엔드포인트가 아직 없다. 추가되면 mock 폴백을 실제 호출로 교체.
-export async function getLog(logId: number): Promise<LogEntry> {
+// 로그 상세(분석 상세 화면) — API 명세 §6.2: GET /api/v1/logs/{logId}.
+// 응답 LogDetail = 원시 로그 + AI 분석(없으면 null) + 매핑 패턴(없으면 null).
+export async function getLogDetail(logId: number): Promise<LogDetail> {
   if (USE_MOCKS) {
-    const log = mockLogPage.content.find((item) => item.logId === logId);
-    if (!log) throw new Error(`Log ${logId} not found`);
-    return readData(log);
+    return readData(mockLogDetail(logId));
   }
 
-  // 상세 엔드포인트 미구현 — 임시로 목록에서 단건 조회.
-  const { items } = await listLogs();
-  const log = items.find((item) => item.logId === logId);
-  if (!log) throw new Error(`Log ${logId} not found`);
-  return log;
+  const { data } = await apiClient.get<LogDetail>(`/api/v1/logs/${logId}`);
+  return data;
 }

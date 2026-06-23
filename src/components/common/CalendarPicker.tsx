@@ -3,14 +3,17 @@ import { useEffect, useRef, useState } from "react";
 
 interface CalendarPickerProps {
   value: string; // "YYYY-MM-DD" | ""
-  activeDates: Set<string>; // 로그가 있는 날짜(선택 가능 + 점 표시)
   onChange: (date: string) => void;
 }
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-export function CalendarPicker({ value, activeDates, onChange }: CalendarPickerProps) {
+// 일반 날짜 선택기: 과거·오늘은 자유 선택, 미래만 비활성.
+// (DB에 데이터 있는 날만 점등하는 동작은 날짜별 데이터 유무 API가 없어 제공하지 않음 —
+//  현재 페이지 항목만으로 점등하면 오해를 주므로 제거)
+export function CalendarPicker({ value, onChange }: CalendarPickerProps) {
   const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(value ? Number(value.slice(0, 4)) : today.getFullYear());
   const [month, setMonth] = useState(value ? Number(value.slice(5, 7)) - 1 : today.getMonth());
@@ -78,20 +81,19 @@ export function CalendarPicker({ value, activeDates, onChange }: CalendarPickerP
             {cells.map((day, i) => {
               if (!day) return <span key={`empty-${i}`} />;
               const dateStr = fmt(day);
-              const hasLogs = activeDates.has(dateStr);
               const selected = value === dateStr;
+              const isFuture = dateStr > todayStr;
               const dow = (firstDay + day - 1) % 7;
               const tone = dow === 0 ? "sun" : dow === 6 ? "sat" : "";
               return (
                 <button
                   key={dateStr}
                   type="button"
-                  disabled={!hasLogs}
+                  disabled={isFuture}
                   onClick={() => { onChange(dateStr); setOpen(false); }}
-                  className={`calendar-cell ${tone} ${selected ? "selected" : ""} ${hasLogs ? "has-logs" : "empty"}`}
+                  className={`calendar-cell ${tone} ${selected ? "selected" : ""} ${isFuture ? "empty" : "has-logs"}`}
                 >
                   {day}
-                  {hasLogs && !selected && <i className="calendar-dot" />}
                 </button>
               );
             })}
