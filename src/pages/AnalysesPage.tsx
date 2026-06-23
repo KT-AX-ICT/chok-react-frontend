@@ -2,12 +2,14 @@ import { AlertTriangle, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listAnalyses } from "../api/analyses";
+import { getApiErrorMessage } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { FilterSelect } from "../components/common/FilterSelect";
 import { DateFilter, type DateFilterValue } from "../components/common/DateFilter";
 import { Pagination } from "../components/common/Pagination";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
+import { EmptyState } from "../components/common/EmptyState";
 import { RiskBadge } from "../components/domain/RiskBadge";
 import { riskMeta } from "../domain/constants";
 import type { AnalysisSummary } from "../domain/analyses/types";
@@ -44,7 +46,7 @@ export default function AnalysesPage() {
         setItems(response.items);
         setError(null);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -100,7 +102,10 @@ export default function AnalysesPage() {
 
       {error && <ErrorState message={error} />}
       {loading && <LoadingState />}
-      {!loading && !error && (
+      {!loading && !error && filtered.length === 0 && (
+        <EmptyState message="표시할 분석 결과가 없습니다." />
+      )}
+      {!loading && !error && filtered.length > 0 && (
         <>
           <div className="analysis-list scrollbar-hide">
             <div className="analysis-header-grid">
@@ -143,7 +148,7 @@ export default function AnalysesPage() {
                     <span className="tone-chip truncate">{clusterLabel}</span>
                     <span className="truncate">{item.aiSummary}</span>
                     <Link
-                      to={`/analyses/${item.analysisId}`}
+                      to={`/analyses/${item.log.logId}`}
                       className="detail-link"
                       onClick={(event) => event.stopPropagation()}
                     >

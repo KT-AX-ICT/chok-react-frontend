@@ -25,3 +25,27 @@ export interface PageResponse<T> {
   first: boolean;
   last: boolean;
 }
+
+/** 공통 에러 포맷(API 명세 §4). 백엔드가 4xx/5xx 시 body로 내려준다. */
+export interface ApiError {
+  timestamp: string;
+  status: number;
+  code: string;
+  message: string;
+  path: string;
+}
+
+/**
+ * 화면에 보여줄 에러 메시지를 추출한다.
+ * 우선순위: 백엔드 ApiError.message → 네트워크 오류 안내 → Error.message → fallback.
+ */
+export function getApiErrorMessage(err: unknown, fallback = "요청을 처리하지 못했습니다."): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as Partial<ApiError> | undefined;
+    if (data?.message) return data.message;
+    if (err.code === "ERR_NETWORK") return "서버에 연결할 수 없습니다. 백엔드 상태를 확인해 주세요.";
+    return err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return fallback;
+}

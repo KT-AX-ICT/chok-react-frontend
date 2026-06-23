@@ -1,12 +1,14 @@
 import { List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { listLogs } from "../api/logs";
+import { getApiErrorMessage } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { FilterSelect } from "../components/common/FilterSelect";
 import { DateFilter, type DateFilterValue } from "../components/common/DateFilter";
 import { Pagination } from "../components/common/Pagination";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
+import { EmptyState } from "../components/common/EmptyState";
 import { LevelBadge } from "../components/domain/LevelBadge";
 import { StatusDot } from "../components/domain/StatusDot";
 import { isAbnormalLog } from "../domain/constants";
@@ -48,7 +50,7 @@ export default function LogsPage() {
         setTotalPages(Math.max(1, response.totalPages));
         setError(null);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [page]);
 
@@ -74,7 +76,10 @@ export default function LogsPage() {
 
       {error && <ErrorState message={error} />}
       {loading && <LoadingState />}
-      {!loading && !error && (
+      {!loading && !error && logs.length === 0 && (
+        <EmptyState message="표시할 로그가 없습니다." />
+      )}
+      {!loading && !error && logs.length > 0 && (
         <>
           <div className="table-region scrollbar-hide">
             <table>

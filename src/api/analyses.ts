@@ -1,6 +1,6 @@
 import { apiClient, readData, USE_MOCKS, type PageResponse } from "./client";
-import type { AnalysisDetail, AnalysisSummary } from "../domain/analyses/types";
-import { mockAnalyses, mockAnalysisDetails } from "../mocks/analyses";
+import type { AnalysisSummary } from "../domain/analyses/types";
+import { mockAnalyses } from "../mocks/analyses";
 
 // 백엔드 AnalysisDto = 프론트 AnalysisSummary(1:1). 목록 응답은 PageResponse<AnalysisDto>.
 type AnalysisDto = AnalysisSummary;
@@ -52,11 +52,5 @@ export async function listAnalyses(query: AnalysisQuery = {}): Promise<AnalysisL
   return toListResponse(data);
 }
 
-// TODO(detail-api): 백엔드에 분석 상세(GET /api/v1/analysis/{id}) 엔드포인트가 아직 없다(보류).
-//   추가되면 아래 mock 폴백을 실제 호출로 교체한다.
-//   현재는 USE_MOCKS와 무관하게 항상 mock을 반환한다(detail API 부재).
-export async function getAnalysisDetail(analysisId: number): Promise<AnalysisDetail> {
-  const analysis = mockAnalysisDetails.find((item) => item.analysisId === analysisId);
-  if (!analysis) throw new Error(`Analysis ${analysisId} not found`);
-  return readData(analysis);
-}
+// 분석 상세는 별도 엔드포인트가 아니라 로그 상세(GET /api/v1/logs/{logId})를 사용한다(명세 §6.2).
+// 화면 이동은 분석목록의 log.logId → /analyses/:logId → api/logs.getLogDetail.

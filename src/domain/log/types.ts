@@ -1,3 +1,5 @@
+import type { RiskLevel } from "../risk";
+
 // Spring ENUM logLevel: INFO / WARNING / ERROR / FATAL / SEVERE / FAILURE (API 공통 규약)
 export type LogLevel = "INFO" | "WARNING" | "ERROR" | "FATAL" | "SEVERE" | "FAILURE";
 
@@ -14,9 +16,42 @@ export interface LogEntry {
   isCaution: boolean; // 백엔드 파생값: label !== '-'.
   isAnalysis: boolean; // 백엔드 파생값: 해당 로그에 분석결과 존재 여부.
   content: string; // 로그 본문. 구 message 대체.
-  riskLevel: string | null; // 미분석이면 null. 한글(긴급/높음/보통/낮음). 표기 SSOT=domain/risk.ts.
+  riskLevel: RiskLevel | null; // 미분석이면 null. 한글(긴급/높음/보통/낮음). 표기 SSOT=domain/risk.ts.
   // NOTE: 백엔드 LogSummary에 eventId/eventTemplate/lineNumber 필드는 없음(제거됨).
   //       표 # 컬럼은 화면에서 인덱스로 파생 처리한다.
+}
+
+// ── 로그 상세 (GET /api/v1/logs/{logId}) — API 명세 §6.2 ──
+// 주체 = bgl_log, log_analysis·pattern_cluster는 LEFT JOIN(없으면 null).
+
+// 상세의 원시 로그(LogSummary + 상세 전용 필드).
+export interface LogRaw extends LogEntry {
+  isAbnormal: boolean | null; // 2차(FastAPI) 판정. true=이상/false=정상/null=미분석.
+  nodeRepeat: string;
+  eventId: string;
+}
+
+// 상세에 중첩되는 AI 분석 결과(log_analysis).
+export interface LogAnalysisInfo {
+  analysisId: number;
+  domain: string;
+  riskLevel: RiskLevel;
+  aiSummary: string;
+  analysis: string;
+  responsePlan: string[];
+}
+
+// 상세에 중첩되는 매핑 패턴 참조(pattern_cluster).
+export interface LogPatternRef {
+  patternId: number;
+  patternName: string;
+  representativeLog: string;
+}
+
+export interface LogDetail {
+  log: LogRaw;
+  analysis: LogAnalysisInfo | null; // null = 분석 없음/분석 중
+  pattern: LogPatternRef | null;
 }
 
 // 화면이 쓰기 쉽게 정리한 목록 응답 형태.

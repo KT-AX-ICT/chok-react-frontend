@@ -1,6 +1,6 @@
 import { apiClient, readData, USE_MOCKS, type PageResponse } from "./client";
-import type { LogEntry, LogListResponse } from "../domain/log/types";
-import { mockLogPage } from "../mocks/logs";
+import type { LogDetail, LogEntry, LogListResponse } from "../domain/log/types";
+import { mockLogDetail, mockLogPage } from "../mocks/logs";
 
 // 백엔드 LogSummary = 프론트 LogEntry(1:1). 목록 응답은 PageResponse<LogSummary>.
 type LogSummary = LogEntry;
@@ -38,18 +38,13 @@ export async function listLogs(query: LogQuery = {}): Promise<LogListResponse> {
   return toListResponse(data);
 }
 
-// TODO(detail-api): 백엔드 LogController에는 GET /logs(목록)만 존재하고
-//   상세(GET /logs/{id}) 엔드포인트가 아직 없다. 추가되면 mock 폴백을 실제 호출로 교체.
-export async function getLog(logId: number): Promise<LogEntry> {
+// 로그 상세(분석 상세 화면) — API 명세 §6.2: GET /api/v1/logs/{logId}.
+// 응답 LogDetail = 원시 로그 + AI 분석(없으면 null) + 매핑 패턴(없으면 null).
+export async function getLogDetail(logId: number): Promise<LogDetail> {
   if (USE_MOCKS) {
-    const log = mockLogPage.content.find((item) => item.logId === logId);
-    if (!log) throw new Error(`Log ${logId} not found`);
-    return readData(log);
+    return readData(mockLogDetail(logId));
   }
 
-  // 상세 엔드포인트 미구현 — 임시로 목록에서 단건 조회.
-  const { items } = await listLogs();
-  const log = items.find((item) => item.logId === logId);
-  if (!log) throw new Error(`Log ${logId} not found`);
-  return log;
+  const { data } = await apiClient.get<LogDetail>(`/api/v1/logs/${logId}`);
+  return data;
 }
