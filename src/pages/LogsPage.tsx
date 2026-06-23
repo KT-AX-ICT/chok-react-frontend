@@ -91,7 +91,6 @@ export default function LogsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, level, date, keyword]);
 
-  const activeDates = new Set(logs.map((log) => String(log.occurredAt).slice(0, 10)));
   const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
   return (
@@ -111,7 +110,6 @@ export default function LogsPage() {
             />
             <DateFilter
               value={dateValue}
-              activeDates={activeDates}
               onChange={(value) => updateParams({ date: value.selectedDate })}
             />
             <label className="search-control">

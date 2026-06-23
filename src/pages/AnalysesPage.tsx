@@ -92,10 +92,6 @@ export default function AnalysesPage() {
       });
   }, [items, riskLevel, keyword, date]);
 
-  const activeDates = useMemo(
-    () => new Set(items.map((item) => item.log.occurredAt.slice(0, 10))),
-    [items],
-  );
   const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
   const toggle = (id: number) => {
@@ -125,7 +121,6 @@ export default function AnalysesPage() {
             />
             <DateFilter
               value={dateValue}
-              activeDates={activeDates}
               onChange={(value) => updateParams({ date: value.selectedDate })}
             />
             <label className="search-control">
