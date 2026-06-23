@@ -1,6 +1,6 @@
 import { List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { listLogs } from "../api/logs";
 import { getApiErrorMessage } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -32,6 +32,11 @@ function toLocalIso(d: Date) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+// LocalDateTime("2024-09-23T11:44:32")의 ISO 'T' 구분자를 공백으로, 초까지만 표시.
+function formatTimestamp(value: string) {
+  return value.slice(0, 19).replace("T", " ");
+}
+
 // 조회 범위. 날짜 선택 시 그 하루, 미선택(최근 24시간) 시 "현재 시각 기준 24시간 전 ~ 지금".
 // (백엔드 기본값에 맡기면 전체가 내려오므로 항상 명시적으로 범위를 보낸다.)
 function rangeFor(date: string) {
@@ -44,6 +49,7 @@ export default function LogsPage() {
   // URL query를 페이지 상태의 단일 출처로 사용 → 새로고침/북마크/뒤로가기 시 그대로 복원된다.
   // (proxy와 무관: 브라우저 URL을 읽어 listLogs params로 번역할 뿐이다.)
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const page = Math.max(1, Number(searchParams.get("page")) || 1); // 1-base(UI), 호출 시 -1
   const level = searchParams.get("level") ?? "ALL";
   const date = searchParams.get("date") ?? "";
@@ -144,13 +150,24 @@ export default function LogsPage() {
         <>
           <div className="table-region scrollbar-hide">
             <table>
+              {/* 컬럼 폭 고정(table-fixed). Content만 가변 폭으로 줄바꿈 표시. */}
+              <colgroup>
+                <col className="w-4" />
+                <col className="w-12" />
+                <col className="w-14" />
+                <col className="w-[190px]" />
+                <col className="w-[210px]" />
+                <col className="w-[140px]" />
+                <col className="w-24" />
+                <col />
+              </colgroup>
               <thead>
                 <tr>
                   <th />
                   <th>#</th>
                   <th>Status</th>
                   <th>Node</th>
-                  <th>Timestamp</th>
+                  <th className="pr-10">Timestamp</th>
                   <th>Component</th>
                   <th>Level</th>
                   <th>Content</th>
@@ -162,16 +179,30 @@ export default function LogsPage() {
                   const abnormal = isAbnormalLog({ level: log.logLevel });
                   // # 컬럼: 백엔드에 lineNumber가 없어 페이지 기준 일련번호로 파생.
                   const rowNumber = (page - 1) * pageSize + index + 1;
+                  // 행 클릭 = 분석 상세 진입(/analyses/:logId 재사용). 별도 링크 컬럼 없음.
+                  const openDetail = () => navigate(`/analyses/${log.logId}`);
                   return (
-                    <tr key={log.logId}>
+                    <tr
+                      key={log.logId}
+                      className="cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={openDetail}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openDetail();
+                        }
+                      }}
+                    >
                       <td>{abnormal && <span className="row-marker" />}</td>
                       <td className="text-faint">{rowNumber}</td>
                       <td><StatusDot abnormal={abnormal} /></td>
-                      <td>{log.node}</td>
-                      <td className="whitespace-nowrap text-muted">{log.occurredAt}</td>
-                      <td>{log.component}</td>
+                      <td className="truncate">{log.node}</td>
+                      <td className="whitespace-nowrap pr-10 text-muted">{formatTimestamp(log.occurredAt)}</td>
+                      <td className="truncate">{log.component}</td>
                       <td><LevelBadge value={log.logLevel} /></td>
-                      <td className="wide">{log.content}</td>
+                      <td className="cell-content">{log.content}</td>
                     </tr>
                   );
                 })}

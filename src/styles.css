@@ -3,13 +3,21 @@
 @source "./**/*.{js,ts,jsx,tsx}";
 @import "tw-animate-css";
 
-@theme inline {
+/*
+ * 색상 토큰은 `@theme`(non-inline)로 등록 → 유틸리티가 var(--color-*)를 "참조"하므로
+ * [data-theme="light"]에서 같은 변수를 덮어쓰면 다크↔라이트가 통째로 전환된다.
+ * (inline이면 값이 인라인되어 테마 전환이 불가능하므로 inline을 쓰지 않는다.)
+ * 기본값(:root) = 다크. light 팔레트는 아래 [data-theme="light"] 블록.
+ */
+@theme {
   --color-bg: #08090f;
   --color-surface: #0f1118;
   --color-surface-2: #161922;
   --color-surface-3: #0a0b10;
   --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-soft: rgba(255, 255, 255, 0.035); /* 표/행 구분선(기존 white/[0.035] 대체) */
   --color-text-main: #e8eaf0;
+  --color-text-soft: #9ca3af; /* 본문 보조 텍스트(기존 하드코딩 #9ca3af 대체) */
   --color-muted: #6b7280;
   --color-faint: #374151;
   --color-primary: #00c8e8;
@@ -20,6 +28,30 @@
   --color-purple: #8b5cf6;
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  /* 가시성 개선: 기본 텍스트 스케일 상향(xs 12→14, sm 14→16, 2xl 24→28) */
+  --text-xs: 14px;
+  --text-sm: 16px;
+  --text-2xl: 28px;
+}
+
+/* 라이트 테마 — :root(다크)의 색상 변수만 덮어쓴다. primary/danger 등은 흰 배경 대비를 위해 톤 다운. */
+[data-theme="light"] {
+  --color-bg: #f4f6f9;
+  --color-surface: #ffffff;
+  --color-surface-2: #eceff4;
+  --color-surface-3: #f0f2f6;
+  --color-line: rgba(15, 23, 42, 0.12);
+  --color-line-soft: rgba(15, 23, 42, 0.07);
+  --color-text-main: #131722;
+  --color-text-soft: #475569;
+  --color-muted: #5b6573;
+  --color-faint: #94a3b8;
+  --color-primary: #0e8aa6;
+  --color-danger: #dc2626;
+  --color-warning: #c2790a;
+  --color-orange: #ea580c;
+  --color-success: #059669;
+  --color-purple: #7c3aed;
 }
 
 @layer base {
@@ -62,13 +94,12 @@
   }
 
   .window-title,
-  .window-dots,
-  .live-status {
+  .window-dots {
     @apply flex items-center;
   }
 
   .window-title {
-    @apply gap-3 select-none font-mono text-[10px] text-faint;
+    @apply gap-3 select-none font-mono text-[12px] text-faint;
   }
 
   .window-dots {
@@ -79,12 +110,16 @@
   .dot-yellow { @apply text-warning; }
   .dot-green { @apply text-success; }
 
-  .live-status {
-    @apply gap-1.5 font-mono text-[9px] text-faint;
+  .brand {
+    @apply font-mono text-[14px] font-semibold tracking-[0.22em] text-primary;
   }
 
-  .live-status span {
-    @apply h-1.5 w-1.5 rounded-full bg-success;
+  .brand-sub {
+    @apply font-mono text-[11px] text-faint;
+  }
+
+  .theme-toggle {
+    @apply flex items-center gap-1.5 rounded border border-line px-2.5 py-1 font-mono text-[11px] text-muted transition-colors hover:border-faint hover:text-text-main;
   }
 
   .app-body {
@@ -92,15 +127,15 @@
   }
 
   .side-nav {
-    @apply flex w-48 shrink-0 flex-col border-r border-line bg-surface-3 px-2 py-4;
+    @apply flex w-56 shrink-0 flex-col border-r border-line bg-surface-3 px-2 py-4;
   }
 
   .nav-title {
-    @apply mx-2 mb-3.5 mt-0 font-mono text-[9px] uppercase tracking-[0.12em] text-faint;
+    @apply mx-2 mb-3.5 mt-0 font-mono text-[11px] uppercase tracking-[0.12em] text-faint;
   }
 
   .nav-link {
-    @apply mb-0.5 flex min-h-[34px] items-center gap-2.5 rounded px-3 py-2 font-mono text-xs text-muted transition-colors;
+    @apply mb-0.5 flex min-h-[34px] items-center gap-2.5 whitespace-nowrap rounded px-3 py-2 font-mono text-xs text-muted transition-colors;
   }
 
   .nav-link svg {
@@ -120,7 +155,7 @@
   }
 
   .nav-count {
-    @apply ml-auto rounded bg-danger/20 px-1 py-0.5 text-[8px] font-medium text-danger;
+    @apply ml-auto rounded bg-danger/20 px-1 py-0.5 text-[10px] font-medium text-danger;
   }
 
   .nav-meta {
@@ -128,7 +163,7 @@
   }
 
   .nav-meta p {
-    @apply mb-1 mt-0 font-mono text-[9px] text-faint;
+    @apply mb-1 mt-0 font-mono text-[11px] text-faint;
   }
 
   .page-frame,
@@ -179,7 +214,7 @@
   }
 
   .page-header-note {
-    @apply mb-0 mt-0.5 text-[11px] text-muted;
+    @apply mb-0 mt-0.5 text-[13px] text-muted;
   }
 
   .page-header-actions {
@@ -188,7 +223,7 @@
 
   .count-chip,
   .tone-chip {
-    @apply inline-flex min-h-5 w-fit items-center whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[10px] text-muted;
+    @apply inline-flex min-h-5 w-fit items-center whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[12px] text-muted;
   }
 
   .grid-2 {
@@ -234,7 +269,7 @@
   }
 
   .view-link {
-    @apply inline-flex items-center gap-0.5 border-0 bg-transparent font-mono text-[9px] text-primary;
+    @apply inline-flex items-center gap-0.5 border-0 bg-transparent font-mono text-[11px] text-primary;
   }
 
   .stat-value {
@@ -246,19 +281,19 @@
   }
 
   .stat-label {
-    @apply mb-0 mt-1 font-mono text-[10px] text-muted;
+    @apply mb-0 mt-1 font-mono text-[12px] text-muted;
   }
 
   .stat-sub {
-    @apply mb-0 mt-0.5 text-[9px] text-faint;
+    @apply mb-0 mt-0.5 text-[11px] text-faint;
   }
 
   .card-title {
-    @apply mb-3 mt-0 font-mono text-[10px] uppercase tracking-[0.12em] text-muted;
+    @apply mb-3 mt-0 font-mono text-[12px] uppercase tracking-[0.12em] text-muted;
   }
 
   .legend {
-    @apply flex items-center gap-3 font-mono text-[9px] text-faint;
+    @apply flex items-center gap-3 font-mono text-[11px] text-faint;
   }
 
   .legend span,
@@ -294,7 +329,7 @@
   }
 
   .mini-row {
-    @apply flex items-start gap-2 border-b border-white/[0.035] py-1.5;
+    @apply flex items-start gap-2 border-b border-line-soft py-1.5;
   }
 
   .mini-row:last-child {
@@ -306,15 +341,15 @@
   }
 
   .mini-row p {
-    @apply m-0 truncate font-mono text-[10px] text-[#9ca3af];
+    @apply m-0 truncate font-mono text-[12px] text-text-soft;
   }
 
   .mini-row small {
-    @apply mt-0.5 flex gap-2 font-mono text-[9px] text-faint;
+    @apply mt-0.5 flex gap-2 font-mono text-[11px] text-faint;
   }
 
   .risk-row {
-    @apply flex items-center justify-between font-mono text-[10px] text-[#9ca3af];
+    @apply flex items-center justify-between font-mono text-[12px] text-text-soft;
   }
 
   .risk-row span:first-child {
@@ -326,7 +361,7 @@
   }
 
   .bar-row {
-    @apply grid grid-cols-[58px_minmax(0,1fr)_32px] items-center gap-2 font-mono text-[9px] text-muted;
+    @apply grid grid-cols-[58px_minmax(0,1fr)_32px] items-center gap-2 font-mono text-[11px] text-muted;
   }
 
   .bar-track {
@@ -338,7 +373,7 @@
   }
 
   .filter-control {
-    @apply relative flex flex-row items-center gap-1.5 font-mono text-[11px] text-muted;
+    @apply relative flex flex-row items-center gap-1.5 font-mono text-[13px] text-muted;
   }
 
   .filter-control span {
@@ -346,11 +381,11 @@
   }
 
   .filter-control select {
-    @apply h-[31px] min-w-32 rounded border border-line bg-bg py-0 pl-3 pr-6 font-mono text-[11px] text-muted outline-none;
+    @apply h-[31px] min-w-32 rounded border border-line bg-bg py-0 pl-3 pr-6 font-mono text-[13px] text-muted outline-none;
   }
 
   .pill-button {
-    @apply h-[31px] rounded border border-primary/30 bg-primary/10 px-3 font-mono text-[11px] text-primary;
+    @apply h-[31px] rounded border border-primary/30 bg-primary/10 px-3 font-mono text-[13px] text-primary;
   }
 
   .search-control {
@@ -358,11 +393,11 @@
   }
 
   .search-control input {
-    @apply w-full border-0 bg-transparent font-mono text-[11px] text-text-main outline-none placeholder:text-faint;
+    @apply w-full border-0 bg-transparent font-mono text-[13px] text-text-main outline-none placeholder:text-faint;
   }
 
   table {
-    @apply w-full min-w-[780px] border-collapse font-mono text-xs;
+    @apply w-full min-w-[980px] table-fixed border-collapse font-mono text-xs;
   }
 
   thead tr {
@@ -371,15 +406,15 @@
 
   th,
   td {
-    @apply border-b border-white/[0.035] px-3 py-[9px] text-left align-middle;
+    @apply border-b border-line-soft px-3 py-[9px] text-left align-middle;
   }
 
   th {
-    @apply whitespace-nowrap text-[11px] font-medium text-muted;
+    @apply whitespace-nowrap text-[13px] font-medium text-muted;
   }
 
   td {
-    @apply text-[#9ca3af];
+    @apply text-text-soft;
   }
 
   tbody tr {
@@ -390,17 +425,17 @@
     @apply block h-4 w-0.5 rounded-full bg-danger;
   }
 
-  .wide,
   .truncate {
     @apply min-w-0 overflow-hidden text-ellipsis whitespace-nowrap;
   }
 
-  .wide {
-    @apply max-w-80;
+  /* 로그 Content 셀: 말줄임 대신 줄바꿈으로 전체 내용 노출(가로 잘림 방지). */
+  .cell-content {
+    @apply min-w-[280px] whitespace-normal break-words;
   }
 
   .badge {
-    @apply inline-flex min-h-5 items-center justify-center whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px];
+    @apply inline-flex min-h-5 items-center justify-center whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[12px];
   }
 
   .badge.success { @apply bg-success/10 text-success; }
@@ -408,7 +443,7 @@
   .badge.orange { @apply bg-orange/15 text-orange; }
   .badge.danger { @apply bg-danger/20 text-danger; }
   .badge.primary { @apply bg-primary/10 text-primary; }
-  .badge.muted { @apply bg-faint/60 text-[#9ca3af]; }
+  .badge.muted { @apply bg-faint/60 text-text-soft; }
   .badge.purple { @apply bg-purple/15 text-purple; }
 
   .status-dot {
@@ -429,11 +464,11 @@
   }
 
   .analysis-header-grid {
-    @apply sticky top-0 z-[2] border-b border-line bg-bg px-4 py-2 font-mono text-[9px] uppercase tracking-[0.1em] text-faint;
+    @apply sticky top-0 z-[2] border-b border-line bg-bg px-4 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-faint;
   }
 
   .analysis-row-wrap {
-    @apply border-b border-l-2 border-b-white/[0.035] border-l-faint;
+    @apply border-b border-l-2 border-b-line-soft border-l-faint;
   }
 
   .analysis-row-wrap.risk-긴급 { @apply border-l-danger; }
@@ -442,11 +477,11 @@
   .analysis-row-wrap.risk-낮음 { @apply border-l-success; }
 
   .analysis-row {
-    @apply px-4 py-2.5 font-mono text-[11px] text-[#9ca3af] hover:bg-surface-2;
+    @apply px-4 py-2.5 font-mono text-[13px] text-text-soft hover:bg-surface-2;
   }
 
   .detail-link {
-    @apply whitespace-nowrap text-[10px] text-primary;
+    @apply whitespace-nowrap text-[12px] text-primary;
   }
 
   .detail-page {
@@ -474,16 +509,16 @@
   }
 
   .detail-kv dt {
-    @apply font-mono text-[10px] text-muted;
+    @apply font-mono text-[12px] text-muted;
   }
 
   .detail-kv dd {
-    @apply m-0 font-mono text-xs text-[#9ca3af];
+    @apply m-0 font-mono text-xs text-text-soft;
     overflow-wrap: anywhere;
   }
 
   .long-text {
-    @apply m-0 text-sm leading-7 text-[#9ca3af];
+    @apply m-0 text-sm leading-7 text-text-soft;
   }
 
   .pre-line {
@@ -503,7 +538,7 @@
   }
 
   .pattern-card-head small {
-    @apply mb-1 block font-mono text-[9px] text-faint;
+    @apply mb-1 block font-mono text-[11px] text-faint;
   }
 
   .pattern-card h3 {
@@ -511,23 +546,23 @@
   }
 
   .pattern-desc {
-    @apply m-0 px-4 pb-3 text-[11px] leading-relaxed text-muted;
+    @apply m-0 px-4 pb-3 text-[13px] leading-relaxed text-muted;
   }
 
   .pattern-template {
-    @apply mx-4 mb-4 rounded border border-white/[0.04] bg-bg px-3 py-2.5;
+    @apply mx-4 mb-4 rounded border border-line-soft bg-bg px-3 py-2.5;
   }
 
   .pattern-template p {
-    @apply mb-1 mt-0 font-mono text-[9px] text-faint;
+    @apply mb-1 mt-0 font-mono text-[11px] text-faint;
   }
 
   .pattern-template code {
-    @apply whitespace-normal font-mono text-[11px] text-[#9ca3af];
+    @apply whitespace-normal font-mono text-[13px] text-text-soft;
   }
 
   .risk-bar {
-    @apply grid grid-cols-[40px_minmax(0,1fr)_32px] items-center gap-2 font-mono text-[10px];
+    @apply grid grid-cols-[40px_minmax(0,1fr)_32px] items-center gap-2 font-mono text-[12px];
   }
 
   .risk-bar-track {
@@ -539,7 +574,7 @@
   }
 
   .pattern-times {
-    @apply flex items-center justify-between gap-3 px-4 pb-3 font-mono text-[9px] text-faint;
+    @apply flex items-center justify-between gap-3 px-4 pb-3 font-mono text-[11px] text-faint;
   }
 
   .state-box {
@@ -547,12 +582,12 @@
   }
 
   .state-box.error {
-    @apply border-danger/35 text-red-200;
+    @apply border-danger/35 text-danger;
   }
 
   /* 날짜 필터 토글 (캘린더 버튼 + 최근 24시간 버튼 공용) */
   .date-toggle {
-    @apply flex h-[31px] items-center gap-1.5 rounded border border-line px-3 font-mono text-[11px] text-muted transition-colors hover:border-faint hover:text-text-main;
+    @apply flex h-[31px] items-center gap-1.5 rounded border border-line px-3 font-mono text-[13px] text-muted transition-colors hover:border-faint hover:text-text-main;
   }
 
   .date-toggle.active {
@@ -569,7 +604,7 @@
   }
 
   .calendar-nav span {
-    @apply font-mono text-[11px] text-text-main;
+    @apply font-mono text-[13px] text-text-main;
   }
 
   .calendar-nav button {
@@ -581,7 +616,7 @@
   }
 
   .calendar-dow span {
-    @apply py-1 text-center font-mono text-[9px] text-faint;
+    @apply py-1 text-center font-mono text-[11px] text-faint;
   }
 
   .calendar-dow span.sun { @apply text-danger/60; }
@@ -592,7 +627,7 @@
   }
 
   .calendar-cell {
-    @apply relative flex h-8 flex-col items-center justify-center rounded font-mono text-[11px] text-text-main transition-colors;
+    @apply relative flex h-8 flex-col items-center justify-center rounded font-mono text-[13px] text-text-main transition-colors;
   }
 
   .calendar-cell.sun { @apply text-danger; }
@@ -633,7 +668,7 @@
   }
 
   .pagination-info {
-    @apply font-mono text-[10px] text-faint;
+    @apply font-mono text-[12px] text-faint;
   }
 
   /* 주의 로그 분석 목록 — 행 인라인 아코디언 */
@@ -646,7 +681,7 @@
   }
 
   .accordion-head-label {
-    @apply font-mono text-[9px] uppercase tracking-[0.12em] text-primary;
+    @apply font-mono text-[11px] uppercase tracking-[0.12em] text-primary;
   }
 
   .accordion-body {
@@ -654,7 +689,7 @@
   }
 
   .accordion-body p {
-    @apply m-0 whitespace-pre-line text-xs leading-relaxed text-[#9ca3af];
+    @apply m-0 whitespace-pre-line text-xs leading-relaxed text-text-soft;
   }
 
   .accordion-chips {

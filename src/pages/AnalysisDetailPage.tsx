@@ -81,7 +81,7 @@ export default function AnalysisDetailPage() {
                   <p className="card-title m-0">위험도 · AI 요약</p>
                 </div>
                 <RiskBadge value={analysis.riskLevel} />
-                <p className="long-text mt-3 text-[13px]">{analysis.aiSummary}</p>
+                <p className="long-text mt-3 text-[15px]">{analysis.aiSummary}</p>
               </div>
 
               <div className="detail-card">
