@@ -8,9 +8,12 @@ type LogSummary = LogEntry;
 export interface LogQuery {
   page?: number; // 0-base (Spring Pageable)
   size?: number;
-  // TODO(filter): 백엔드 LogSearchCondition 연동 시 아래 파라미터 추가.
-  //   startAt, endAt, riskLevel, logType, component, logLevel, label, keyword, isCaution, isAnalysis
-  //   + Pageable.sort. 현재는 page/size만 전달한다.
+  startAt?: string; // ISO LocalDateTime. 미지정 시 백엔드가 최근 24h 사용.
+  endAt?: string;
+  logLevel?: string; // INFO/WARNING/ERROR/FATAL/SEVERE/FAILURE
+  keyword?: string; // content 부분검색
+  // TODO(filter): 잔여 LogSearchCondition(riskLevel/logType/component/label/isCaution/isAnalysis)
+  //   + Pageable.sort 는 화면 요구 확정 시 확장한다.
 }
 
 // PageResponse<LogSummary> → 화면용 LogListResponse 평탄화.
@@ -32,7 +35,10 @@ export async function listLogs(query: LogQuery = {}): Promise<LogListResponse> {
   const params: Record<string, unknown> = {};
   if (query.page !== undefined) params.page = query.page;
   if (query.size !== undefined) params.size = query.size;
-  // TODO(filter): LogSearchCondition 파라미터를 params에 병합.
+  if (query.startAt) params.startAt = query.startAt;
+  if (query.endAt) params.endAt = query.endAt;
+  if (query.logLevel) params.logLevel = query.logLevel;
+  if (query.keyword) params.keyword = query.keyword;
 
   const { data } = await apiClient.get<PageResponse<LogSummary>>("/api/v1/logs", { params });
   return toListResponse(data);

@@ -1,6 +1,6 @@
 import { AlertTriangle, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { listAnalyses } from "../api/analyses";
 import { getApiErrorMessage } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -28,48 +28,75 @@ const PAGE_SIZE = 20;
 const UNCLUSTERED = 99;
 
 export default function AnalysesPage() {
+  // URL query를 상태의 단일 출처로 사용(새로고침/북마크 복원). proxy와 무관 — URL을 읽어 요청에 반영할 뿐.
+  // 주의: 백엔드 /analysis는 page/size만 지원(필터 없음). 따라서 page만 서버 페이징이고
+  //   위험도/검색/날짜 필터는 "현재 페이지 내" 클라이언트 필터다(서버 필터 생기면 params로 이관).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Math.max(1, Number(searchParams.get("page")) || 1); // 1-base(UI)
+  const riskLevel = searchParams.get("risk") ?? "ALL";
+  const keyword = searchParams.get("q") ?? "";
+  const date = searchParams.get("date") ?? "";
+
   const [items, setItems] = useState<AnalysisSummary[]>([]);
-  const [riskLevel, setRiskLevel] = useState("ALL");
-  const [keyword, setKeyword] = useState("");
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>({ selectedDate: "", recent24h: true });
-  const [page, setPage] = useState(1);
+  const [keywordInput, setKeywordInput] = useState(keyword);
 
-  // 백엔드 GET /api/v1/analysis는 Pageable만 받고 riskLevel/keyword 필터가 없다.
-  // 따라서 목록은 한 번만 받아오고, 위험도/검색 필터는 아래 클라이언트 측에서 처리한다.
+  function updateParams(next: Record<string, string>) {
+    const params = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(next)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    if (!("page" in next)) params.delete("page"); // 필터 변경 시 page 리셋
+    setSearchParams(params);
+  }
+
+  useEffect(() => {
+    setKeywordInput(keyword);
+  }, [keyword]);
+
   useEffect(() => {
     setLoading(true);
-    listAnalyses()
+    listAnalyses({ page: page - 1, size: PAGE_SIZE })
       .then((response) => {
         setItems(response.items);
+        setTotal(response.total);
+        setTotalPages(Math.max(1, response.totalPages));
         setError(null);
+        if (response.totalPages >= 1 && page > response.totalPages) {
+          const params = new URLSearchParams(searchParams);
+          params.set("page", String(response.totalPages));
+          setSearchParams(params, { replace: true });
+        }
       })
       .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-  // 클라이언트 측 위험도/검색 필터(서버 미지원 대체).
+  // 클라이언트 측 필터(서버 미지원) — 현재 페이지의 items에만 적용된다(한계).
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
     return items
       .filter((item) => riskLevel === "ALL" || item.riskLevel === riskLevel)
+      .filter((item) => !date || item.log.occurredAt.slice(0, 10) === date)
       .filter((item) => {
         if (!kw) return true;
         return [item.log.label, item.log.node, item.aiSummary].some((value) =>
           value.toLowerCase().includes(kw),
         );
       });
-  }, [items, riskLevel, keyword]);
+  }, [items, riskLevel, keyword, date]);
 
-  // 날짜 필터는 순수 UI 껍질 — 실제 필터링 없이 캘린더 활성 표시에만 사용.
   const activeDates = useMemo(
-    () => new Set(filtered.map((item) => item.log.occurredAt.slice(0, 10))),
-    [filtered],
+    () => new Set(items.map((item) => item.log.occurredAt.slice(0, 10))),
+    [items],
   );
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
   const toggle = (id: number) => {
     setExpanded((prev) => {
@@ -90,11 +117,27 @@ export default function AnalysesPage() {
         note="최근 24시간 · 위험도 높은 순"
         actions={
           <>
-            <FilterSelect label="Risk" value={riskLevel} options={riskOptions} onChange={setRiskLevel} />
-            <DateFilter value={dateFilter} activeDates={activeDates} onChange={setDateFilter} />
+            <FilterSelect
+              label="Risk"
+              value={riskLevel}
+              options={riskOptions}
+              onChange={(value) => updateParams({ risk: value === "ALL" ? "" : value })}
+            />
+            <DateFilter
+              value={dateValue}
+              activeDates={activeDates}
+              onChange={(value) => updateParams({ date: value.selectedDate })}
+            />
             <label className="search-control">
               <Search size={12} />
-              <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="라벨, 노드, 요약 검색..." />
+              <input
+                value={keywordInput}
+                onChange={(event) => setKeywordInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") updateParams({ q: keywordInput.trim() });
+                }}
+                placeholder="라벨, 노드, 요약 검색 후 Enter..."
+              />
             </label>
           </>
         }
@@ -181,9 +224,9 @@ export default function AnalysesPage() {
           <Pagination
             page={page}
             totalPages={totalPages}
-            totalItems={filtered.length}
+            totalItems={total}
             pageSize={PAGE_SIZE}
-            onChange={setPage}
+            onChange={(next) => updateParams({ page: String(next) })}
           />
         </>
       )}

@@ -1,5 +1,6 @@
 import { List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { listLogs } from "../api/logs";
 import { getApiErrorMessage } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -25,34 +26,73 @@ const levelOptions = [
 
 const pageSize = 20;
 
+// "YYYY-MM-DD" → 하루 범위(서버 startAt/endAt). 빈 값이면 null(백엔드 기본 = 최근 24h).
+function dayRange(date: string) {
+  if (!date) return null;
+  return { startAt: `${date}T00:00:00`, endAt: `${date}T23:59:59` };
+}
+
 export default function LogsPage() {
+  // URL query를 페이지 상태의 단일 출처로 사용 → 새로고침/북마크/뒤로가기 시 그대로 복원된다.
+  // (proxy와 무관: 브라우저 URL을 읽어 listLogs params로 번역할 뿐이다.)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Math.max(1, Number(searchParams.get("page")) || 1); // 1-base(UI), 호출 시 -1
+  const level = searchParams.get("level") ?? "ALL";
+  const date = searchParams.get("date") ?? "";
+  const keyword = searchParams.get("q") ?? "";
+
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [level, setLevel] = useState("ALL");
-  const [keyword, setKeyword] = useState("");
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>({ selectedDate: "", recent24h: true });
-  const [page, setPage] = useState(1); // 1-base(UI). 백엔드 Pageable은 0-base라 호출 시 -1.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [keywordInput, setKeywordInput] = useState(keyword);
 
-  // 캘린더에 점 표시용 — 로그 occurredAt의 날짜부분(YYYY-MM-DD)만 모은다.
-  const activeDates = new Set(logs.map((log) => String(log.occurredAt).slice(0, 10)));
+  // URL 파라미터 일부만 갱신(나머지 보존). 필터 변경 시 page는 1로 리셋(page 키를 직접 안 넘긴 경우).
+  function updateParams(next: Record<string, string>) {
+    const params = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(next)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    if (!("page" in next)) params.delete("page");
+    setSearchParams(params);
+  }
+
+  useEffect(() => {
+    setKeywordInput(keyword);
+  }, [keyword]);
 
   useEffect(() => {
     setLoading(true);
-    // TODO(filter): level/keyword/dateFilter를 LogQuery(LogSearchCondition)로 전달.
-    //   현재는 page/size만 서버에 보내고 필터 UI는 화면 유지용으로만 둔다.
-    listLogs({ page: page - 1, size: pageSize })
+    const range = dayRange(date);
+    listLogs({
+      page: page - 1,
+      size: pageSize,
+      logLevel: level !== "ALL" ? level : undefined,
+      keyword: keyword || undefined,
+      startAt: range?.startAt,
+      endAt: range?.endAt,
+    })
       .then((response) => {
         setLogs(response.items);
         setTotal(response.total);
         setTotalPages(Math.max(1, response.totalPages));
         setError(null);
+        // out-of-range 클램프: 데이터 변경으로 요청 page가 실제 totalPages를 넘으면 마지막 페이지로.
+        if (response.totalPages >= 1 && page > response.totalPages) {
+          const params = new URLSearchParams(searchParams);
+          params.set("page", String(response.totalPages));
+          setSearchParams(params, { replace: true });
+        }
       })
       .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, level, date, keyword]);
+
+  const activeDates = new Set(logs.map((log) => String(log.occurredAt).slice(0, 10)));
+  const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
   return (
     <div className="screen">
@@ -60,15 +100,30 @@ export default function LogsPage() {
         icon={List}
         title="시스템 로그"
         chip={<span className="count-chip">{total}</span>}
-        note="최근 24시간 수집 로그"
+        note={date ? `${date} 수집 로그` : "최근 24시간 수집 로그"}
         actions={
           <>
-            {/* TODO(filter): 아래 컨트롤들은 아직 서버 필터에 연결되지 않음(화면 유지용). */}
-            <FilterSelect label="Level" value={level} options={levelOptions} onChange={setLevel} />
-            <DateFilter value={dateFilter} activeDates={activeDates} onChange={setDateFilter} />
+            <FilterSelect
+              label="Level"
+              value={level}
+              options={levelOptions}
+              onChange={(value) => updateParams({ level: value === "ALL" ? "" : value })}
+            />
+            <DateFilter
+              value={dateValue}
+              activeDates={activeDates}
+              onChange={(value) => updateParams({ date: value.selectedDate })}
+            />
             <label className="search-control">
               <Search size={12} />
-              <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="노드, 내용 검색..." />
+              <input
+                value={keywordInput}
+                onChange={(event) => setKeywordInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") updateParams({ q: keywordInput.trim() });
+                }}
+                placeholder="내용 검색 후 Enter..."
+              />
             </label>
           </>
         }
@@ -122,7 +177,7 @@ export default function LogsPage() {
             totalPages={totalPages}
             totalItems={total}
             pageSize={pageSize}
-            onChange={setPage}
+            onChange={(next) => updateParams({ page: String(next) })}
           />
         </>
       )}
