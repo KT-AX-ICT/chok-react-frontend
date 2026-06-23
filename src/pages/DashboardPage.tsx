@@ -189,7 +189,7 @@ export default function DashboardPage() {
               <Link className="view-link" to="/analyses">전체 보기 <ChevronRight size={9} /></Link>
             </div>
             <div className="mini-list">
-              {dashboard.recentCautionLogs.slice(0, 4).map((log) => (
+              {(dashboard.recentCautionLogs ?? []).slice(0, 4).map((log) => (
                 <div className="mini-row" key={log.logId}>
                   <span className="mini-dot" />
                   <div className="truncate">
@@ -207,7 +207,7 @@ export default function DashboardPage() {
               <Link className="view-link" to="/patterns">전체 보기 <ChevronRight size={9} /></Link>
             </div>
             <div className="mini-list">
-              {dashboard.recentPatterns.slice(0, 4).map((pattern) => (
+              {(dashboard.recentPatterns ?? []).slice(0, 4).map((pattern) => (
                 <div className="mini-row" key={pattern.patternId}>
                   <TrendingUp size={10} className={`mt-0.5 shrink-0 ${riskToneClassOf(pattern.riskLevel)}`} />
                   <div className="truncate">
