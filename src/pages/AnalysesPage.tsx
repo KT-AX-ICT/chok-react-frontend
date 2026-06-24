@@ -197,13 +197,20 @@ export default function AnalysesPage() {
                         <RiskBadge value={item.riskLevel} />
                       </div>
                       <div className="accordion-body">
-                        <p>{item.aiSummary}</p>
+                        <p className="mb-2 font-mono text-xs text-muted">[위험도: {item.riskLevel ?? "정상"}]</p>
+                        <p className="long-text">{item.analysis}</p>
+                        {item.responsePlan.length > 0 && (
+                          <ol className="response-plan long-text mt-3">
+                            {item.responsePlan.map((step, index) => (
+                              <li key={index}>{step}</li>
+                            ))}
+                          </ol>
+                        )}
                       </div>
                       <div className="accordion-chips">
                         {item.patternId !== undefined && (
                           <span className="tone-chip">패턴 #{item.patternId}</span>
                         )}
-                        <span className="tone-chip">{item.riskLevel ?? "정상"}</span>
                       </div>
                     </div>
                   )}

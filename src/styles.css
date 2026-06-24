@@ -555,6 +555,11 @@
     @apply m-0 text-sm leading-7 text-text-soft;
   }
 
+  /* 대응 방안 번호 목록(아코디언·상세 공용). Tailwind preflight가 지운 list 번호를 복구. */
+  .response-plan {
+    @apply list-decimal space-y-1 pl-5;
+  }
+
   .pre-line {
     @apply whitespace-pre-line;
   }
