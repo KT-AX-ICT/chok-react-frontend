@@ -8,9 +8,8 @@ type AnalysisDto = AnalysisSummary;
 export interface AnalysisQuery {
   page?: number; // 0-base (Spring Pageable)
   size?: number;
-  // TODO(filter): 백엔드 GET /api/v1/analysis는 Pageable만 받고
-  //   riskLevel/keyword 필터 파라미터가 없다. 서버 필터 미지원이므로
-  //   위험도/검색 필터는 화면(클라이언트) 측에서 처리한다.
+  keyword?: string; // 서버검색: summary·analysis·action LIKE (GET /api/v1/analysis 지원).
+  // TODO(filter): 위험도/날짜 필터는 백엔드 미지원 — 화면(클라이언트) 측에서 처리한다.
 }
 
 export interface AnalysisListResponse {
@@ -34,11 +33,18 @@ function toListResponse(payload: PageResponse<AnalysisDto>): AnalysisListRespons
 
 export async function listAnalyses(query: AnalysisQuery = {}): Promise<AnalysisListResponse> {
   if (USE_MOCKS) {
+    // 백엔드 keyword(summary·analysis·action LIKE) 모사 — aiSummary·analysis·responsePlan 부분검색.
+    const kw = query.keyword?.trim().toLowerCase();
+    const items = kw
+      ? mockAnalyses.filter((a) =>
+          [a.aiSummary, a.analysis, ...a.responsePlan].some((v) => v.toLowerCase().includes(kw)),
+        )
+      : mockAnalyses;
     return readData<AnalysisListResponse>({
-      items: mockAnalyses,
-      total: mockAnalyses.length,
+      items,
+      total: items.length,
       page: query.page ?? 0,
-      size: query.size ?? mockAnalyses.length,
+      size: query.size ?? items.length,
       totalPages: 1,
     });
   }
@@ -46,7 +52,8 @@ export async function listAnalyses(query: AnalysisQuery = {}): Promise<AnalysisL
   const params: Record<string, unknown> = {};
   if (query.page !== undefined) params.page = query.page;
   if (query.size !== undefined) params.size = query.size;
-  // TODO(filter): 백엔드에 위험도/키워드 필터가 생기면 params에 병합.
+  if (query.keyword) params.keyword = query.keyword;
+  // TODO(filter): 위험도 필터는 백엔드 미지원 — 생기면 params에 병합.
 
   const { data } = await apiClient.get<PageResponse<AnalysisDto>>("/api/v1/analysis", { params });
   return toListResponse(data);

@@ -26,8 +26,8 @@ const PAGE_SIZE = 20;
 
 export default function AnalysesPage() {
   // URL query를 상태의 단일 출처로 사용(새로고침/북마크 복원). proxy와 무관 — URL을 읽어 요청에 반영할 뿐.
-  // 주의: 백엔드 /analysis는 page/size만 지원(필터 없음). 따라서 page만 서버 페이징이고
-  //   위험도/검색/날짜 필터는 "현재 페이지 내" 클라이언트 필터다(서버 필터 생기면 params로 이관).
+  // 백엔드 /analysis는 page/size + keyword(summary·analysis·action) 지원.
+  //   keyword·page는 서버 처리, 위험도/날짜는 "현재 페이지 내" 클라이언트 필터(서버 미지원).
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get("page")) || 1); // 1-base(UI)
   const riskLevel = searchParams.get("risk") ?? "ALL";
@@ -58,7 +58,7 @@ export default function AnalysesPage() {
 
   useEffect(() => {
     setLoading(true);
-    listAnalyses({ page: page - 1, size: PAGE_SIZE })
+    listAnalyses({ page: page - 1, size: PAGE_SIZE, keyword: keyword || undefined })
       .then((response) => {
         setItems(response.items);
         setTotal(response.total);
@@ -73,25 +73,18 @@ export default function AnalysesPage() {
       .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, keyword]);
 
-  // 클라이언트 측 필터(서버 미지원) — 현재 페이지의 items에만 적용된다(한계).
+  // keyword는 서버검색이라 제외 — 위험도/날짜만 현재 페이지 내 클라이언트 필터(서버 미지원).
   const filtered = useMemo(() => {
-    const kw = keyword.trim().toLowerCase();
     return items
       .filter((item) => riskLevel === "ALL" || item.riskLevel === riskLevel)
       .filter((item) => {
         // 날짜 선택 시 그 하루, 미선택(최근 24시간) 시 현재 시각 기준 24시간 이내.
         if (date) return item.log.occurredAt.slice(0, 10) === date;
         return new Date(item.log.occurredAt).getTime() >= Date.now() - 24 * 60 * 60 * 1000;
-      })
-      .filter((item) => {
-        if (!kw) return true;
-        return [item.log.node, item.aiSummary].some((value) =>
-          value.toLowerCase().includes(kw),
-        );
       });
-  }, [items, riskLevel, keyword, date]);
+  }, [items, riskLevel, date]);
 
   const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
@@ -132,7 +125,7 @@ export default function AnalysesPage() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") updateParams({ q: keywordInput.trim() });
                 }}
-                placeholder="라벨, 노드, 요약 검색 후 Enter..."
+                placeholder="요약·분석·대응 검색 후 Enter..."
               />
             </label>
           </>
