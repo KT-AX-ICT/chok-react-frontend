@@ -494,7 +494,7 @@
 
   .analysis-header-grid,
   .analysis-row {
-    @apply grid grid-cols-[16px_155px_110px_68px_160px_minmax(0,1fr)_60px] items-center;
+    @apply grid grid-cols-[16px_155px_150px_68px_160px_minmax(0,1fr)_60px] items-center;
   }
 
   .analysis-header-grid {
