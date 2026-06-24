@@ -720,22 +720,20 @@
   }
 
   .accordion-head {
-    @apply flex items-center gap-2 border-b border-line/60 px-4 py-2;
+    @apply flex items-center justify-between gap-2 border-b border-line/60 px-4 py-2.5;
   }
 
-  .accordion-head-label {
-    @apply font-mono text-[11px] uppercase tracking-[0.12em] text-primary;
+  /* 섹션 라벨('분석'·'대응 방안' 공용) — 본문보다 흐리고 작게, 굵기로 구분 */
+  .accordion-section-label {
+    @apply m-0 text-[11px] font-semibold tracking-tight text-muted;
   }
 
+  /* 본문·대응 글씨 위계는 body에서 한 번에 지정(자식이 상속) */
   .accordion-body {
-    @apply px-4 py-3;
+    @apply px-4 py-3 text-[13px] leading-relaxed text-text-soft;
   }
 
   .accordion-body p {
-    @apply m-0 whitespace-pre-line text-xs leading-relaxed text-text-soft;
-  }
-
-  .accordion-chips {
-    @apply flex items-center gap-2 px-4 pb-3;
+    @apply m-0 whitespace-pre-line;
   }
 }
