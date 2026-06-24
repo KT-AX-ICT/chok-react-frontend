@@ -11,7 +11,6 @@ import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
 import { EmptyState } from "../components/common/EmptyState";
 import { RiskBadge } from "../components/domain/RiskBadge";
-import { riskMeta } from "../domain/constants";
 import type { AnalysisSummary } from "../domain/analyses/types";
 
 const riskOptions = [
@@ -199,7 +198,7 @@ export default function AnalysesPage() {
                         {item.patternId !== undefined && (
                           <span className="tone-chip">패턴 #{item.patternId}</span>
                         )}
-                        <span className="tone-chip">{riskMeta[item.riskLevel].label}</span>
+                        <span className="tone-chip">{item.riskLevel ?? "정상"}</span>
                       </div>
                     </div>
                   )}
