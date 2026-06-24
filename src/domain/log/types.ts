@@ -12,8 +12,7 @@ export interface LogEntry {
   component: string;
   logType: string;
   logLevel: LogLevel; // 구 level 대체.
-  label: string; // BGL 라벨. '-'이면 정상(검증 답지).
-  isCaution: boolean; // 백엔드 파생값: label !== '-'.
+  isCaution: boolean; // 백엔드 파생값: 시스템 판정(2차 이상 또는 2차 전 FATAL).
   isAnalysis: boolean; // 백엔드 파생값: 해당 로그에 분석결과 존재 여부.
   content: string; // 로그 본문. 구 message 대체.
   riskLevel: RiskLevel | null; // 미분석이면 null. 한글(긴급/높음/보통/낮음). 표기 SSOT=domain/risk.ts.

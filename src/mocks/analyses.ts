@@ -1,13 +1,8 @@
-import type {
-  AnalysisDetail,
-  AnalysisLogInfo,
-  AnalysisSummary,
-} from "../domain/analyses/types";
+import type { AnalysisSummary } from "../domain/analyses/types";
 
-// 상세 mock — 분석 엔티티(LogAnalysis) 기준으로 직접 정의.
-// 백엔드 detail API가 아직 없어(보류) entity 필드를 그대로 채운다.
-// clusterId: 패턴 클러스터 번호(미분류=99). responsePlan: action을 줄 단위로 파싱한 결과.
-export const mockAnalysisDetails: AnalysisDetail[] = [
+// 분석 목록(GET /analysis) 응답(AnalysisDto) 모사 — 백엔드와 동일 필드 세트.
+// ※ label·patternId는 백엔드 AnalysisDto에 노출되지 않으므로 mock에서도 제외한다(컬럼 빈칸 유지).
+export const mockAnalyses: AnalysisSummary[] = [
   {
     analysisId: 101,
     domain: "BGL",
@@ -21,8 +16,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       "동일 이벤트가 반복되면 해당 노드의 메모리와 네트워크 스택을 점검합니다.",
       "실행 중이던 배치 잡 ID를 확인해 재제출 여부를 결정합니다.",
     ],
-    clusterId: 7,
-    analyzedAt: "2026-06-04 01:14:40",
     log: {
       logId: 2,
       occurredAt: "2026-06-04 01:14:32",
@@ -30,7 +23,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       component: "CIOD",
       logType: "RAS",
       logLevel: "FATAL",
-      label: "APPREAD",
       content:
         "ciod: failed to read message prefix on control stream (CioStream socket to 172.16.96.116:33934)",
       isCaution: true,
@@ -49,8 +41,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       "R11-M2-N 접근 계정과 세션을 감사합니다.",
       "auditd 로그를 수집해 접근 주체를 특정합니다.",
     ],
-    clusterId: 12,
-    analyzedAt: "2026-06-04 02:31:52",
     log: {
       logId: 3,
       occurredAt: "2026-06-04 02:31:45",
@@ -58,7 +48,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       component: "KERNEL",
       logType: "RAS",
       logLevel: "FATAL",
-      label: "SECURITY",
       content:
         "unauthorized access attempt to /proc/sysrq-trigger detected from uid=0 session",
       isCaution: true,
@@ -77,8 +66,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       "IPMI/BMC에서 CPU 온도를 확인합니다.",
       "해당 노드의 워크로드를 다른 노드로 이동합니다.",
     ],
-    clusterId: 5,
-    analyzedAt: "2026-06-04 03:45:18",
     log: {
       logId: 4,
       occurredAt: "2026-06-04 03:45:11",
@@ -86,7 +73,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       component: "KERNEL",
       logType: "RAS",
       logLevel: "FATAL",
-      label: "CRITICAL",
       content:
         "machine check: CPU thermal throttling event, core temperature exceeded threshold",
       isCaution: true,
@@ -105,8 +91,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       "ethtool로 NIC 상태를 확인합니다.",
       "백업 네트워크 경로를 활성화합니다.",
     ],
-    clusterId: 9,
-    analyzedAt: "2026-06-04 04:03:05",
     log: {
       logId: 5,
       occurredAt: "2026-06-04 04:02:58",
@@ -114,7 +98,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       component: "MMCS",
       logType: "RAS",
       logLevel: "ERROR",
-      label: "NETWORK",
       content: "eth0: link down after 3 retries, network interface unreachable",
       isCaution: true,
     },
@@ -132,8 +115,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       "OOM 직전 메모리 사용 추이를 분석합니다.",
       "cgroup 메모리 상한이나 워크로드 재분산을 검토합니다.",
     ],
-    clusterId: 7,
-    analyzedAt: "2026-06-05 07:55:09",
     log: {
       logId: 6,
       occurredAt: "2026-06-05 07:55:01",
@@ -141,7 +122,6 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       component: "KERNEL",
       logType: "RAS",
       logLevel: "FATAL",
-      label: "CRITICAL",
       content:
         "Out of memory: Killed process 18342 (app_worker) total-vm:8421376kB, oom_score:998",
       isCaution: true,
@@ -159,33 +139,16 @@ export const mockAnalysisDetails: AnalysisDetail[] = [
       "해당 링크의 정정 가능 오류 카운터 추이를 모니터링합니다.",
       "오류율이 계속 상승하면 케이블/커넥터 교체를 검토합니다.",
     ],
-    clusterId: 99,
-    analyzedAt: "2026-06-05 09:12:30",
     log: {
       logId: 7,
       occurredAt: "2026-06-05 09:12:22",
       node: "R09-M1-N",
       component: "TORUS",
       logType: "RAS",
-      logLevel: "WARN",
-      label: "GENERAL",
+      logLevel: "WARNING",
       content:
         "correctable single bit error count approaching threshold on torus link x+",
       isCaution: false,
     },
   },
 ];
-
-// 목록 mock — 상세에서 AnalysisDto(목록 항목) 필드만 추려 파생.
-export const mockAnalyses: AnalysisSummary[] = mockAnalysisDetails.map(
-  (detail): AnalysisSummary => ({
-    analysisId: detail.analysisId,
-    domain: detail.domain,
-    riskLevel: detail.riskLevel,
-    aiSummary: detail.aiSummary,
-    analysis: detail.analysis,
-    responsePlan: detail.responsePlan,
-    log: { ...detail.log } satisfies AnalysisLogInfo,
-    clusterId: detail.clusterId, // 데모용(실제 AnalysisDto 응답엔 없음 — types.ts TODO 참조)
-  }),
-);

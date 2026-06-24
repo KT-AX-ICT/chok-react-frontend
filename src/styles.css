@@ -523,7 +523,7 @@
   }
 
   .detail-back {
-    @apply inline-flex items-center gap-2 font-mono text-xs text-muted;
+    @apply inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 font-mono text-xs text-muted;
   }
 
   .detail-content {

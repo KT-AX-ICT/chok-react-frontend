@@ -79,7 +79,6 @@ export default function PatternsPage() {
                   </div>
                   <div className="pattern-times">
                     <span>중요도 {pattern.importance}</span>
-                    <span>위험도 {pattern.riskLevel ?? "-"}</span>
                   </div>
                 </div>
               );

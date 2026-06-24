@@ -1,12 +1,11 @@
 import { ArrowLeft, Brain, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getLogDetail } from "../api/logs";
 import { getApiErrorMessage } from "../api/client";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
 import { EmptyState } from "../components/common/EmptyState";
-import { LabelBadge } from "../components/domain/LabelBadge";
 import { RiskBadge } from "../components/domain/RiskBadge";
 import type { LogDetail } from "../domain/log/types";
 
@@ -14,6 +13,7 @@ import type { LogDetail } from "../domain/log/types";
 // 응답 LogDetail = 원시 로그 + AI 분석(없으면 null) + 매핑 패턴(없으면 null).
 export default function AnalysisDetailPage() {
   const { logId } = useParams();
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<LogDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,13 +39,12 @@ export default function AnalysisDetailPage() {
   return (
     <div className="detail-page">
       <div className="page-header justify-start">
-        <Link className="detail-back" to="/analyses">
+        <button type="button" className="detail-back" onClick={() => navigate(-1)}>
           <ArrowLeft size={14} />
-          <span>주의 로그 분석</span>
-        </Link>
+          <span>뒤로</span>
+        </button>
         <span className="font-mono text-xs text-faint">/</span>
         <span className="font-mono text-xs text-text-main">LOG #{log.logId}</span>
-        <LabelBadge value={log.label} />
       </div>
 
       <div className="detail-content scrollbar-hide">
