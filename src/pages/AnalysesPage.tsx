@@ -193,23 +193,20 @@ export default function AnalysesPage() {
                   {isOpen && (
                     <div className="accordion-panel">
                       <div className="accordion-head">
-                        <span className="accordion-head-label">AI 분석</span>
+                        <span className="accordion-section-label">분석</span>
                         <RiskBadge value={item.riskLevel} />
                       </div>
                       <div className="accordion-body">
-                        <p className="mb-2 font-mono text-xs text-muted">[위험도: {item.riskLevel ?? "정상"}]</p>
-                        <p className="long-text">{item.analysis}</p>
+                        <p>{item.analysis}</p>
                         {item.responsePlan.length > 0 && (
-                          <ol className="response-plan long-text mt-3">
-                            {item.responsePlan.map((step, index) => (
-                              <li key={index}>{step}</li>
-                            ))}
-                          </ol>
-                        )}
-                      </div>
-                      <div className="accordion-chips">
-                        {item.patternId !== undefined && (
-                          <span className="tone-chip">패턴 #{item.patternId}</span>
+                          <>
+                            <p className="accordion-section-label mt-4 mb-1.5">대응 방안</p>
+                            <ol className="response-plan">
+                              {item.responsePlan.map((step, index) => (
+                                <li key={index}>{step}</li>
+                              ))}
+                            </ol>
+                          </>
                         )}
                       </div>
                     </div>
