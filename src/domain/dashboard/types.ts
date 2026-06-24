@@ -47,8 +47,6 @@ export interface RecentCautionLog {
   node: string;
   component: string;
   logLevel: string;
-  logType: string;
-  label: string;
   isCaution: boolean;
   isAnalysis: boolean;
   content: string;
@@ -58,7 +56,6 @@ export interface RecentPattern {
   patternId: number;
   patternName: string;
   count: number;
-  riskLevel: string;
   importance: number;
 }
 

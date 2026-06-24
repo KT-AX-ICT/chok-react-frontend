@@ -5,7 +5,7 @@ import { getDashboard } from "../api/dashboard";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingState } from "../components/common/LoadingState";
 import { getApiErrorMessage } from "../api/client";
-import { riskToneClassOf, toDashboardViewModel } from "../domain/dashboard/adapter";
+import { toDashboardViewModel } from "../domain/dashboard/adapter";
 import type { ChartPoint } from "../domain/dashboard/adapter";
 import type { DashboardResponse } from "../domain/dashboard/types";
 
@@ -215,7 +215,7 @@ export default function DashboardPage() {
                     <span className="mini-dot" />
                     <div className="truncate">
                       <p>{log.content}</p>
-                      <small><span>{log.node}</span><span>{log.label}</span><span>{log.logLevel}</span></small>
+                      <small><span>{log.node}</span><span>{log.logLevel}</span></small>
                     </div>
                   </div>
                 ))
@@ -234,10 +234,10 @@ export default function DashboardPage() {
               ) : (
                 (dashboard.recentPatterns ?? []).slice(0, 4).map((pattern) => (
                   <div className="mini-row" key={pattern.patternId}>
-                    <TrendingUp size={10} className={`mt-0.5 shrink-0 ${riskToneClassOf(pattern.riskLevel)}`} />
+                    <TrendingUp size={10} className="mt-0.5 shrink-0 text-primary" />
                     <div className="truncate">
                       <p>{pattern.patternName}</p>
-                      <small><span>{pattern.count.toLocaleString()}건</span><span>{pattern.riskLevel}</span></small>
+                      <small><span>{pattern.count.toLocaleString()}건</span><span>중요도 {pattern.importance}</span></small>
                     </div>
                   </div>
                 ))
