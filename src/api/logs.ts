@@ -12,6 +12,7 @@ export interface LogQuery {
   endAt?: string;
   logLevel?: string; // INFO/WARNING/ERROR/FATAL/SEVERE/FAILURE
   keyword?: string; // content 부분검색
+  isAbnormal?: boolean; // 서버 LogSearchCondition.isAbnormal. true=2차 이상만, 미지정=전체.
   // TODO(filter): 잔여 LogSearchCondition(riskLevel/logType/component/label/isCaution/isAnalysis)
   //   + Pageable.sort 는 화면 요구 확정 시 확장한다.
 }
@@ -39,6 +40,7 @@ export async function listLogs(query: LogQuery = {}): Promise<LogListResponse> {
   if (query.endAt) params.endAt = query.endAt;
   if (query.logLevel) params.logLevel = query.logLevel;
   if (query.keyword) params.keyword = query.keyword;
+  if (query.isAbnormal !== undefined) params.isAbnormal = query.isAbnormal;
 
   const { data } = await apiClient.get<PageResponse<LogSummary>>("/api/v1/logs", { params });
   return toListResponse(data);
