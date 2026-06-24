@@ -149,7 +149,7 @@ export default function AnalysesPage() {
       )}
       {!loading && !error && filtered.length > 0 && (
         <>
-          <div className="analysis-list scrollbar-hide">
+          <div className="analysis-list scrollbar-slim">
             <div className="analysis-header-grid">
               <span />
               <span>Timestamp</span>
