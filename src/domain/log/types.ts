@@ -34,7 +34,7 @@ export interface LogRaw extends LogEntry {
 export interface LogAnalysisInfo {
   analysisId: number;
   domain: string;
-  riskLevel: RiskLevel;
+  riskLevel: RiskLevel | null; // 정상 판정 분석은 null.
   aiSummary: string;
   analysis: string;
   responsePlan: string[];
