@@ -12,7 +12,7 @@ import { ErrorState } from "../components/common/ErrorState";
 import { EmptyState } from "../components/common/EmptyState";
 import { LevelBadge } from "../components/domain/LevelBadge";
 import { StatusDot } from "../components/domain/StatusDot";
-import { isAbnormalLog } from "../domain/constants";
+import { logStatus } from "../domain/constants";
 import type { LogEntry } from "../domain/log/types";
 
 const levelOptions = [
@@ -175,8 +175,8 @@ export default function LogsPage() {
               </thead>
               <tbody>
                 {logs.map((log, index) => {
-                  // isAbnormalLog는 { level, isAbnormal } 형태를 받음(constants.ts SSOT, 수정 금지).
-                  const abnormal = isAbnormalLog({ level: log.logLevel });
+                  // status 점: FATAL만 표시. 분석 전(회색)/정상(초록)/이상(빨강) — 서버 isCaution·isAnalysis 기반.
+                  const status = logStatus(log);
                   // # 컬럼: 백엔드에 lineNumber가 없어 페이지 기준 일련번호로 파생.
                   const rowNumber = (page - 1) * pageSize + index + 1;
                   // 행 클릭 = 분석 상세 진입(/analyses/:logId 재사용). 별도 링크 컬럼 없음.
@@ -195,9 +195,9 @@ export default function LogsPage() {
                         }
                       }}
                     >
-                      <td>{abnormal && <span className="row-marker" />}</td>
+                      <td>{status === "abnormal" && <span className="row-marker" />}</td>
                       <td className="text-faint">{rowNumber}</td>
-                      <td><StatusDot abnormal={abnormal} /></td>
+                      <td><StatusDot status={status} /></td>
                       <td className="truncate">{log.node}</td>
                       <td className="whitespace-nowrap pr-10 text-muted">{formatTimestamp(log.occurredAt)}</td>
                       <td className="truncate">{log.component}</td>

@@ -17,9 +17,16 @@ export const levelMeta: Record<LogLevel, { label: string; tone: string }> = {
   FAILURE: { label: "FAILURE", tone: "danger" },
 };
 
-// 시스템 정상/이상 판정: FATAL 기반(1차 필터). 추후 API가 is_abnormal을 주면 그 값이 우선.
-export function isAbnormalLog(log: { level: LogLevel; isAbnormal?: boolean }) {
-  return log.isAbnormal ?? log.level === "FATAL";
+// 로그 목록 status 점의 4-state. none=점 없음(비FATAL), pending=분석 전, normal=정상, abnormal=이상.
+export type LogStatus = "none" | "pending" | "normal" | "abnormal";
+
+// 목록 status 판정: 분석 대상(FATAL)만 점을 찍는다. 분석 전(isAnalysis=false)은 회색,
+// 분석 완료 후엔 isCaution이 곧 2차 판정(isAbnormal)과 일치하므로 정상/이상을 그대로 가른다.
+// (안전망 FATAL 분기는 isAbnormal=null 즉 분석 전에만 작동 → isAnalysis로 이미 분리됨)
+export function logStatus(log: { logLevel: LogLevel; isAnalysis: boolean; isCaution: boolean }): LogStatus {
+  if (log.logLevel !== "FATAL") return "none";
+  if (!log.isAnalysis) return "pending";
+  return log.isCaution ? "abnormal" : "normal";
 }
 
 // 분석 화면의 BGL 라벨(검증 답지) 표시에만 사용. 로그 목록 status 판정에는 쓰지 않음.
