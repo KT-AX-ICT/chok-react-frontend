@@ -101,3 +101,17 @@ export const mockDashboardResponse: DashboardResponse = {
     { patternId: 13, patternName: "Application Read Error", count: 42, riskLevel: "보통", importance: 72 },
   ],
 };
+
+// 빈 상태 UI 확인용. range만 유지하고 통계 0 / 분포·리스트는 빈 배열.
+// VITE_USE_MOCKS=true + VITE_MOCK_EMPTY=true 일 때 사용된다(api/dashboard.ts).
+export const emptyDashboardResponse: DashboardResponse = {
+  range: { startAt: START_AT, endAt: END_AT },
+  stats: { totalLogCount: 0, cautionLogCount: 0, analyzedLogCount: 0 },
+  timeSeries: [],
+  riskDistribution: [],
+  typeDistribution: [],
+  componentDistribution: [],
+  levelDistribution: [],
+  recentCautionLogs: [],
+  recentPatterns: [],
+};

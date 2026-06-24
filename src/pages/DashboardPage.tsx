@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { getDashboard } from "../api/dashboard";
 import { ErrorState } from "../components/common/ErrorState";
 import { LoadingState } from "../components/common/LoadingState";
-import { EmptyState } from "../components/common/EmptyState";
 import { getApiErrorMessage } from "../api/client";
 import { riskToneClassOf, toDashboardViewModel } from "../domain/dashboard/adapter";
 import type { ChartPoint } from "../domain/dashboard/adapter";
@@ -117,9 +116,11 @@ export default function DashboardPage() {
 
   if (error) return <ErrorState message={error} />;
   if (!dashboard || !view) return <LoadingState />;
-  if (dashboard.stats.totalLogCount === 0) return <EmptyState message="표시할 데이터가 없습니다." />;
 
+  // 데이터가 없어도 카드 프레임은 유지하고, 각 섹션 내부에서 "데이터 없음"을 표시한다.
   const maxComponent = Math.max(...view.componentBars.map((item) => item.count), 1);
+  const hasTimeSeries = view.timeSeries.some((point) => point.total > 0 || point.caution > 0);
+  const riskTotal = view.riskDistribution.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <div className="screen-scroll scrollbar-hide">
@@ -155,20 +156,30 @@ export default function DashboardPage() {
                 <span>최근 24시간</span>
               </div>
             </div>
-            <AreaChart data={view.timeSeries} />
+            {hasTimeSeries ? (
+              <AreaChart data={view.timeSeries} />
+            ) : (
+              <p className="mini-empty">표시할 데이터가 없습니다.</p>
+            )}
           </div>
 
           <div className="ui-card">
             <p className="card-title">위험도 분포</p>
-            <DonutChart data={view.riskDistribution} />
-            <div className="risk-list">
-              {view.riskDistribution.map((item) => (
-                <div className="risk-row" key={item.riskLevel}>
-                  <span><i style={{ background: item.color }} />{item.riskLevel}</span>
-                  <strong>{item.count.toLocaleString()}</strong>
+            {riskTotal === 0 ? (
+              <p className="mini-empty">표시할 데이터가 없습니다.</p>
+            ) : (
+              <>
+                <DonutChart data={view.riskDistribution} />
+                <div className="risk-list">
+                  {view.riskDistribution.map((item) => (
+                    <div className="risk-row" key={item.riskLevel}>
+                      <span><i style={{ background: item.color }} />{item.riskLevel}</span>
+                      <strong>{item.count.toLocaleString()}</strong>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -176,13 +187,17 @@ export default function DashboardPage() {
           <div className="ui-card">
             <p className="card-title">최근 24 시간 컴포넌트별 로그 수</p>
             <div className="bar-list">
-              {view.componentBars.slice(0, 4).map((item) => (
-                <div className="bar-row" key={item.component}>
-                  <span>{item.component}</span>
-                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(item.count / maxComponent) * 100}%` }} /></div>
-                  <strong>{item.count.toLocaleString()}</strong>
-                </div>
-              ))}
+              {view.componentBars.length === 0 ? (
+                <p className="mini-empty">표시할 데이터가 없습니다.</p>
+              ) : (
+                view.componentBars.slice(0, 4).map((item) => (
+                  <div className="bar-row" key={item.component}>
+                    <span>{item.component}</span>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(item.count / maxComponent) * 100}%` }} /></div>
+                    <strong>{item.count.toLocaleString()}</strong>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -192,15 +207,19 @@ export default function DashboardPage() {
               <Link className="view-link" to="/analyses">전체 보기 <ChevronRight size={9} /></Link>
             </div>
             <div className="mini-list">
-              {(dashboard.recentCautionLogs ?? []).slice(0, 4).map((log) => (
-                <div className="mini-row" key={log.logId}>
-                  <span className="mini-dot" />
-                  <div className="truncate">
-                    <p>{log.content}</p>
-                    <small><span>{log.node}</span><span>{log.label}</span><span>{log.logLevel}</span></small>
+              {(dashboard.recentCautionLogs ?? []).length === 0 ? (
+                <p className="mini-empty">주의 로그가 없습니다.</p>
+              ) : (
+                (dashboard.recentCautionLogs ?? []).slice(0, 4).map((log) => (
+                  <div className="mini-row" key={log.logId}>
+                    <span className="mini-dot" />
+                    <div className="truncate">
+                      <p>{log.content}</p>
+                      <small><span>{log.node}</span><span>{log.label}</span><span>{log.logLevel}</span></small>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -210,15 +229,19 @@ export default function DashboardPage() {
               <Link className="view-link" to="/patterns">전체 보기 <ChevronRight size={9} /></Link>
             </div>
             <div className="mini-list">
-              {(dashboard.recentPatterns ?? []).slice(0, 4).map((pattern) => (
-                <div className="mini-row" key={pattern.patternId}>
-                  <TrendingUp size={10} className={`mt-0.5 shrink-0 ${riskToneClassOf(pattern.riskLevel)}`} />
-                  <div className="truncate">
-                    <p>{pattern.patternName}</p>
-                    <small><span>{pattern.count.toLocaleString()}건</span><span>{pattern.riskLevel}</span></small>
+              {(dashboard.recentPatterns ?? []).length === 0 ? (
+                <p className="mini-empty">탐지된 패턴이 없습니다.</p>
+              ) : (
+                (dashboard.recentPatterns ?? []).slice(0, 4).map((pattern) => (
+                  <div className="mini-row" key={pattern.patternId}>
+                    <TrendingUp size={10} className={`mt-0.5 shrink-0 ${riskToneClassOf(pattern.riskLevel)}`} />
+                    <div className="truncate">
+                      <p>{pattern.patternName}</p>
+                      <small><span>{pattern.count.toLocaleString()}건</span><span>{pattern.riskLevel}</span></small>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
