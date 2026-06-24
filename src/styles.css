@@ -341,7 +341,7 @@
   }
 
   .mini-list {
-    @apply gap-2;
+    @apply min-h-[132px] gap-2;
   }
 
   .risk-list {
@@ -349,7 +349,13 @@
   }
 
   .bar-list {
-    @apply gap-2.5;
+    @apply min-h-[132px] gap-2.5;
+  }
+
+  /* 카드 내부 섹션이 비었을 때의 인라인 안내(전체 페이지 EmptyState와 별개).
+     min-height(floor)로 데이터 유무와 무관하게 프레임 높이를 유지한다. */
+  .mini-empty {
+    @apply flex min-h-[132px] items-center justify-center text-center text-xs text-muted;
   }
 
   .risk-bars {
