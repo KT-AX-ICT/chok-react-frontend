@@ -79,6 +79,32 @@ const mockLogs: LogEntry[] = [
     content: "out of memory: kill process 9234 score 998",
     riskLevel: "보통",
   },
+  {
+    // 분석 전(pending·회색): FATAL이지만 아직 2차 분석 미도착 → isCaution은 FATAL 안전망으로 true.
+    logId: 7,
+    occurredAt: "2026-06-05 09:12:40",
+    node: "R09-M2-N",
+    component: "KERNEL",
+    logType: "RAS",
+    logLevel: "FATAL",
+    isCaution: true,
+    isAnalysis: false,
+    content: "rts: kernel terminated for reason 1004",
+    riskLevel: null,
+  },
+  {
+    // 분석됨·정상(normal·초록): 2차가 정상 판정 → isCaution=false, riskLevel null.
+    logId: 8,
+    occurredAt: "2026-06-05 10:03:22",
+    node: "R06-M1-N",
+    component: "APP",
+    logType: "RAS",
+    logLevel: "FATAL",
+    isCaution: false,
+    isAnalysis: true,
+    content: "ciod: LOGIN chdir failed: Input/output error (recovered)",
+    riskLevel: null,
+  },
 ];
 
 // GET /api/v1/logs 응답(PageResponse<LogSummary>) 모사. 단일 페이지 기준.

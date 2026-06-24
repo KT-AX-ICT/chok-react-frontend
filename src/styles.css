@@ -492,6 +492,10 @@
     @apply bg-success;
   }
 
+  .status-dot.pending {
+    @apply bg-muted;
+  }
+
   .analysis-header-grid,
   .analysis-row {
     @apply grid grid-cols-[16px_155px_110px_68px_160px_minmax(0,1fr)_60px] items-center;
