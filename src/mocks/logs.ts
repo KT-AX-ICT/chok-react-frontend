@@ -2,10 +2,10 @@ import type { PageResponse } from "../api/client";
 import type { LogDetail, LogEntry, LogRaw } from "../domain/log/types";
 
 // 백엔드 LogSummary(SSOT) 형태의 mock. BGL 로그 성격에 맞춘 현실적 값.
-// - label: 정상은 '-', 이상은 BGL 라벨(APPREAD/KERNDTLB 등)
 // - logLevel: 6종(INFO/WARNING/ERROR/FATAL/SEVERE/FAILURE)
 // - riskLevel: 분석 완료 시 한글(긴급/높음/보통/낮음), 미분석이면 null
-// - isCaution = label !== '-', isAnalysis = riskLevel != null (백엔드 파생값을 그대로 모사)
+// - isCaution/isAnalysis: 백엔드 파생값(시스템 판정 / 분석결과 존재)을 그대로 모사
+// ※ label(BGL 답지)은 백엔드 응답에 노출되지 않으므로 mock에서도 제외한다.
 const mockLogs: LogEntry[] = [
   {
     logId: 1,
@@ -14,7 +14,6 @@ const mockLogs: LogEntry[] = [
     component: "KERNEL",
     logType: "RAS",
     logLevel: "INFO",
-    label: "-",
     isCaution: false,
     isAnalysis: false,
     content: "instruction cache parity error corrected",
@@ -27,7 +26,6 @@ const mockLogs: LogEntry[] = [
     component: "APP",
     logType: "RAS",
     logLevel: "FATAL",
-    label: "APPREAD",
     isCaution: true,
     isAnalysis: true,
     content: "ciod: failed to read message prefix after forking",
@@ -40,7 +38,6 @@ const mockLogs: LogEntry[] = [
     component: "KERNEL",
     logType: "RAS",
     logLevel: "WARNING",
-    label: "-",
     isCaution: false,
     isAnalysis: false,
     content: "unauthorized access attempt on /proc/sysrq-trigger",
@@ -53,7 +50,6 @@ const mockLogs: LogEntry[] = [
     component: "KERNEL",
     logType: "RAS",
     logLevel: "FATAL",
-    label: "KERNDTLB",
     isCaution: true,
     isAnalysis: true,
     content: "machine check exception: CPU thermal throttling",
@@ -66,7 +62,6 @@ const mockLogs: LogEntry[] = [
     component: "KERNEL",
     logType: "RAS",
     logLevel: "ERROR",
-    label: "KERNSOCK",
     isCaution: true,
     isAnalysis: false,
     content: "network interface eth0: link down after 3 retries",
@@ -79,7 +74,6 @@ const mockLogs: LogEntry[] = [
     component: "APP",
     logType: "RAS",
     logLevel: "FATAL",
-    label: "APPOOM",
     isCaution: true,
     isAnalysis: true,
     content: "out of memory: kill process 9234 score 998",
@@ -106,7 +100,7 @@ export function mockLogDetail(logId: number): LogDetail {
 
   const log: LogRaw = {
     ...summary,
-    isAbnormal: summary.isAnalysis ? summary.label !== "-" : null,
+    isAbnormal: summary.isAnalysis ? summary.isCaution : null,
     nodeRepeat: summary.node,
     eventId: `E${100 + summary.logId}`,
   };
@@ -122,13 +116,13 @@ export function mockLogDetail(logId: number): LogDetail {
       analysisId: 500 + summary.logId,
       domain: "BGL",
       riskLevel: summary.riskLevel,
-      aiSummary: `${summary.label} 이상 징후 요약(mock).`,
+      aiSummary: `${summary.component} 컴포넌트 이상 징후 요약(mock).`,
       analysis: `${summary.node}에서 "${summary.content}" 가 관측되었습니다(mock 분석).`,
       responsePlan: ["관련 노드 로그 수집", "동일 이벤트 재발 여부 모니터링", "필요 시 하드웨어/네트워크 점검"],
     },
     pattern: {
       patternId: 10 + summary.logId,
-      patternName: `${summary.label} 패턴`,
+      patternName: `${summary.component} 패턴`,
       representativeLog: summary.content,
     },
   };

@@ -24,9 +24,6 @@ const riskOptions = [
 
 const PAGE_SIZE = 20;
 
-// 패턴 클러스터 미분류 번호(백엔드 LogAnalysis.clusterId 기본값).
-const UNCLUSTERED = 99;
-
 export default function AnalysesPage() {
   // URL query를 상태의 단일 출처로 사용(새로고침/북마크 복원). proxy와 무관 — URL을 읽어 요청에 반영할 뿐.
   // 주의: 백엔드 /analysis는 page/size만 지원(필터 없음). 따라서 page만 서버 페이징이고
@@ -90,7 +87,7 @@ export default function AnalysesPage() {
       })
       .filter((item) => {
         if (!kw) return true;
-        return [item.log.label, item.log.node, item.aiSummary].some((value) =>
+        return [item.log.node, item.aiSummary].some((value) =>
           value.toLowerCase().includes(kw),
         );
       });
@@ -161,10 +158,8 @@ export default function AnalysesPage() {
             </div>
             {filtered.map((item) => {
               const isOpen = expanded.has(item.analysisId);
-              const clusterLabel =
-                item.clusterId !== undefined && item.clusterId !== UNCLUSTERED
-                  ? `#${item.clusterId} - ${riskMeta[item.riskLevel].label}`
-                  : "-";
+              // TODO(backend): AnalysisDto에 patternId 미노출 → 현재 항상 빈칸. 노출되면 그대로 표시.
+              const patternLabel = item.patternId !== undefined ? `#${item.patternId}` : "";
               return (
                 <div className={`analysis-row-wrap risk-${item.riskLevel}`} key={item.analysisId}>
                   <div
@@ -187,7 +182,7 @@ export default function AnalysesPage() {
                     <span className="whitespace-nowrap text-muted">{item.log.occurredAt}</span>
                     <span className="truncate">{item.log.node}</span>
                     <RiskBadge value={item.riskLevel} />
-                    <span className="tone-chip truncate">{clusterLabel}</span>
+                    <span className="tone-chip truncate">{patternLabel}</span>
                     <span className="truncate">{item.aiSummary}</span>
                     <Link
                       to={`/analyses/${item.log.logId}`}
@@ -208,8 +203,8 @@ export default function AnalysesPage() {
                         <p>{item.aiSummary}</p>
                       </div>
                       <div className="accordion-chips">
-                        {item.clusterId !== undefined && item.clusterId !== UNCLUSTERED && (
-                          <span className="tone-chip">패턴 #{item.clusterId}</span>
+                        {item.patternId !== undefined && (
+                          <span className="tone-chip">패턴 #{item.patternId}</span>
                         )}
                         <span className="tone-chip">{riskMeta[item.riskLevel].label}</span>
                       </div>
