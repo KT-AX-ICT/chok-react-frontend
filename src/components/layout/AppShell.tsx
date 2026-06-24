@@ -1,6 +1,6 @@
-import { Activity, AlertTriangle, BarChart2, Circle, List } from "lucide-react";
+import { Activity, AlertTriangle, BarChart2, Circle, List, Menu } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { getDashboard } from "../../api/dashboard";
 import { ThemeToggle } from "./ThemeToggle";
 import type { DashboardResponse } from "../../domain/dashboard/types";
@@ -24,12 +24,20 @@ function formatRange(range: DashboardResponse["range"] | undefined) {
 
 export function AppShell() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  // 모바일/태블릿(<1024) 드로어 열림 상태. 데스크탑(≥1024)에서는 사이드바가 고정이라 무시된다.
+  const [navOpen, setNavOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     getDashboard()
       .then(setDashboard)
       .catch(() => setDashboard(null));
   }, []);
+
+  // 라우트 이동 시 드로어 자동 닫기(좁은 화면).
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   const dateRange = useMemo(() => formatRange(dashboard?.range), [dashboard]);
   const cautionCount = dashboard?.stats.cautionLogCount ?? 0;
@@ -39,6 +47,15 @@ export function AppShell() {
     <div className="app-shell">
       <header className="top-bar">
         <div className="window-title">
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-label="메뉴 열기/닫기"
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            <Menu size={18} />
+          </button>
           <div className="window-dots">
             <Circle size={7} className="dot-red" fill="currentColor" />
             <Circle size={7} className="dot-yellow" fill="currentColor" />
@@ -51,7 +68,9 @@ export function AppShell() {
       </header>
 
       <div className="app-body">
-        <aside className="side-nav">
+        {/* 좁은 화면 드로어 배경 오버레이(데스크탑에서는 lg:hidden) */}
+        {navOpen && <div className="nav-overlay" onClick={() => setNavOpen(false)} />}
+        <aside className={`side-nav ${navOpen ? "nav-open" : ""}`}>
           <p className="nav-title">Navigation</p>
           {navItems.map((item) => {
             const Icon = item.icon;
