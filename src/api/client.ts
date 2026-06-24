@@ -1,8 +1,8 @@
 import axios from "axios";
 
-// dev에선 상대경로("") → vite proxy(/api → :8080)로 same-origin 중계(CORS 불필요).
-// 배포/원격 직접 호출 시에만 VITE_API_BASE_URL로 호스트를 지정한다.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+// CORS 방식: 브라우저가 백엔드를 직접 호출한다. 외부/원격 접속 시 .env의
+// VITE_API_BASE_URL에 백엔드 절대주소(예: http://<서버IP>:8080)를 지정한다.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
 
 export const apiClient = axios.create({
