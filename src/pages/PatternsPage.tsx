@@ -41,7 +41,7 @@ export default function PatternsPage() {
         <EmptyState message="표시할 패턴이 없습니다." />
       )}
       {!loading && !error && patterns.length > 0 && (
-        <div className="screen-scroll scrollbar-hide">
+        <div className="screen-scroll scrollbar-slim">
           <div className="pattern-grid">
             {patterns.map((pattern) => {
               const max = Math.max(pattern.count, 1);

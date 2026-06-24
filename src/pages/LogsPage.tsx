@@ -148,7 +148,7 @@ export default function LogsPage() {
       )}
       {!loading && !error && logs.length > 0 && (
         <>
-          <div className="table-region scrollbar-hide">
+          <div className="table-region scrollbar-slim">
             <table>
               {/* 컬럼 폭 고정(table-fixed). Content만 가변 폭으로 줄바꿈 표시. */}
               <colgroup>
