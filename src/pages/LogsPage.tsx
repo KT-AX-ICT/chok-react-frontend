@@ -1,4 +1,4 @@
-import { List, Search } from "lucide-react";
+import { AlertTriangle, List, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listLogs } from "../api/logs";
@@ -54,6 +54,7 @@ export default function LogsPage() {
   const level = searchParams.get("level") ?? "ALL";
   const date = searchParams.get("date") ?? "";
   const keyword = searchParams.get("q") ?? "";
+  const abnormalOnly = searchParams.get("abnormal") === "1"; // "이상만"(isAbnormal=true) 토글
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -87,6 +88,7 @@ export default function LogsPage() {
       keyword: keyword || undefined,
       startAt: range.startAt,
       endAt: range.endAt,
+      isAbnormal: abnormalOnly ? true : undefined,
     })
       .then((response) => {
         setLogs(response.items);
@@ -103,7 +105,7 @@ export default function LogsPage() {
       .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, level, date, keyword]);
+  }, [page, level, date, keyword, abnormalOnly]);
 
   const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
@@ -122,6 +124,14 @@ export default function LogsPage() {
               options={levelOptions}
               onChange={(value) => updateParams({ level: value === "ALL" ? "" : value })}
             />
+            <button
+              type="button"
+              className={`date-toggle ${abnormalOnly ? "active" : ""}`}
+              onClick={() => updateParams({ abnormal: abnormalOnly ? "" : "1" })}
+            >
+              <AlertTriangle size={12} />
+              이상만
+            </button>
             <DateFilter
               value={dateValue}
               onChange={(value) => updateParams({ date: value.selectedDate })}
