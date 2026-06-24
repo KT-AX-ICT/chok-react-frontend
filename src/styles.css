@@ -67,7 +67,8 @@
   }
 
   body {
-    @apply m-0 min-w-[1080px] overflow-hidden bg-bg text-text-main font-sans;
+    /* 데스크탑 우선: 좁은 화면(<1024)에서는 고정 최소폭 해제 + 세로 스크롤 허용 */
+    @apply m-0 overflow-hidden bg-bg text-text-main font-sans;
   }
 
   a {
@@ -92,6 +93,16 @@
 
   .top-bar {
     @apply flex h-[45px] shrink-0 items-center justify-between border-b border-line bg-surface-3 px-5;
+  }
+
+  /* 햄버거 토글 — 데스크탑(≥1024) 숨김, 좁은 화면에서만 노출 */
+  .nav-toggle {
+    @apply hidden items-center border-0 bg-transparent p-0 text-muted transition-colors hover:text-text-main max-lg:inline-flex;
+  }
+
+  /* 드로어 배경 — 좁은 화면에서 사이드바 열렸을 때만 */
+  .nav-overlay {
+    @apply fixed inset-0 top-[45px] z-30 bg-black/50 lg:hidden;
   }
 
   .window-title,
@@ -129,6 +140,12 @@
 
   .side-nav {
     @apply flex w-56 shrink-0 flex-col border-r border-line bg-surface-3 px-2 py-4;
+    /* <1024: 고정 드로어로 전환(top-bar 아래부터). 기본은 화면 밖으로 밀어둠 */
+    @apply max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:top-[45px] max-lg:z-40 max-lg:-translate-x-full max-lg:shadow-2xl max-lg:transition-transform max-lg:duration-200;
+  }
+
+  .side-nav.nav-open {
+    @apply max-lg:translate-x-0;
   }
 
   .nav-title {
@@ -218,15 +235,17 @@
   }
 
   .screen-scroll {
-    @apply h-full overflow-y-auto p-5;
+    @apply h-full overflow-y-auto p-5 2xl:p-8 max-md:p-3;
   }
 
   .screen-inner {
-    @apply mx-auto max-w-[1200px];
+    @apply mx-auto max-w-[1200px] 2xl:max-w-[1440px];
   }
 
   .page-header {
     @apply flex shrink-0 items-center justify-between gap-3 border-b border-line px-5 py-3;
+    /* 좁은 화면: 제목/액션을 세로로 쌓고 액션은 풀폭 */
+    @apply max-md:flex-col max-md:items-stretch;
   }
 
   .page-header-main {
@@ -247,6 +266,7 @@
 
   .page-header-actions {
     @apply flex shrink-0 items-center gap-2;
+    @apply max-md:flex-wrap;
   }
 
   .count-chip,
@@ -255,15 +275,15 @@
   }
 
   .grid-2 {
-    @apply grid grid-cols-2 gap-3;
+    @apply grid grid-cols-2 gap-3 max-md:grid-cols-1;
   }
 
   .grid-3 {
-    @apply grid grid-cols-3 gap-3;
+    @apply grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1;
   }
 
   .span-2 {
-    @apply col-span-2;
+    @apply col-span-2 max-md:col-span-1;
   }
 
   .ui-card,
@@ -424,6 +444,7 @@
 
   .search-control {
     @apply flex h-[31px] w-[260px] items-center gap-2 rounded border border-line bg-surface px-3 text-faint;
+    @apply max-md:w-full;
   }
 
   .search-control input {
@@ -503,10 +524,13 @@
 
   .analysis-header-grid {
     @apply sticky top-0 z-[2] border-b border-line bg-bg px-4 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-faint;
+    /* 좁은 화면: 7열 압축 대신 최소폭 확보 → 컨테이너(.analysis-list) 가로 스크롤 */
+    @apply max-lg:min-w-[860px];
   }
 
   .analysis-row-wrap {
     @apply border-b border-l-2 border-b-line-soft border-l-faint;
+    @apply max-lg:min-w-[860px];
   }
 
   .analysis-row-wrap.risk-긴급 { @apply border-l-danger; }
@@ -531,7 +555,7 @@
   }
 
   .detail-content {
-    @apply p-5;
+    @apply p-5 2xl:p-8 max-md:p-3;
   }
 
   .detail-stack {
@@ -569,11 +593,13 @@
   }
 
   .pattern-grid {
-    @apply grid max-w-[1200px] grid-cols-2 gap-4;
+    @apply grid max-w-[1200px] grid-cols-2 gap-4 max-md:grid-cols-1 2xl:max-w-[1600px] 2xl:grid-cols-3;
   }
 
+  /* subgrid: 같은 그리드 행 카드들의 5개 섹션(head·desc·template·risk-bars·times)을
+     동일한 행 트랙에 정렬 → 위험도 막대가 카드끼리 수평으로 맞는다. 자식 수=5와 row-span-5 일치 필수. */
   .pattern-card {
-    @apply flex flex-col overflow-hidden;
+    @apply grid grid-rows-subgrid row-span-5 overflow-hidden;
   }
 
   .pattern-card-head {
