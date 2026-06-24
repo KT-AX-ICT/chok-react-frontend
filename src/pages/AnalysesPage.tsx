@@ -23,6 +23,11 @@ const riskOptions = [
 
 const PAGE_SIZE = 20;
 
+// "2026-06-25T17:05:40.593643" → "2026-06-25 17:05:40" (초까지, T→공백). mock의 공백 형식도 그대로 통과.
+function formatTimestamp(value: string) {
+  return value.slice(0, 19).replace("T", " ");
+}
+
 export default function AnalysesPage() {
   // URL query를 상태의 단일 출처로 사용(새로고침/북마크 복원). proxy와 무관 — URL을 읽어 요청에 반영할 뿐.
   // 백엔드 /analysis는 page/size + keyword(summary·analysis·action) 지원.
@@ -171,7 +176,7 @@ export default function AnalysesPage() {
                     ) : (
                       <ChevronDown size={11} className="text-muted" />
                     )}
-                    <span className="whitespace-nowrap text-muted">{item.log.occurredAt}</span>
+                    <span className="whitespace-nowrap text-muted">{formatTimestamp(item.log.occurredAt)}</span>
                     <span className="truncate">{item.log.node}</span>
                     <RiskBadge value={item.riskLevel} />
                     <span className="tone-chip truncate">{patternLabel}</span>
