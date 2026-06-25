@@ -242,7 +242,8 @@
   }
 
   .screen-inner {
-    @apply mx-auto max-w-[1200px] 2xl:max-w-[1440px];
+    /* 16" 그램(~1700px)은 cap 아래라 영향 없음. 그보다 넓은 외부 모니터에서 여백이 과하지 않도록 cap 상향. */
+    @apply mx-auto max-w-[1200px] 2xl:max-w-[1760px];
   }
 
   .page-header {
@@ -368,8 +369,13 @@
     @apply min-h-[132px] gap-2;
   }
 
+  /* 도넛 + 위험도별 건수를 한 줄에 가로 배치(세로 적층 시 공간 낭비 해소). */
+  .risk-dist {
+    @apply flex items-center gap-5;
+  }
+
   .risk-list {
-    @apply mt-4 gap-1.5;
+    @apply gap-1.5;
   }
 
   .bar-list {
@@ -407,7 +413,7 @@
   }
 
   .risk-row {
-    @apply flex items-center justify-between font-mono text-[12px] text-text-soft;
+    @apply flex items-center gap-3 font-mono text-[12px] text-text-soft;
   }
 
   .risk-row span:first-child {
