@@ -518,11 +518,11 @@
   }
 
   .status-dot.pending {
-    @apply bg-muted;
+    @apply bg-warning;
   }
 
   .status-dot.none {
-    @apply bg-faint;
+    @apply border border-muted bg-transparent;
   }
 
   .analysis-header-grid,
