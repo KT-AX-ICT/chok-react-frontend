@@ -126,7 +126,7 @@ export default function AnalysesPage() {
         iconClassName="text-danger"
         title="주의 로그 AI 분석"
         chip={<span className="count-chip bg-danger/10 text-danger">{total}</span>}
-        note={date ? `${date} 분석 결과` : "최근 24시간 · 위험도 높은 순"}
+        note={date ? `${date} 분석 결과` : "최근 24시간"}
         actions={
           <>
             <FilterSelect
