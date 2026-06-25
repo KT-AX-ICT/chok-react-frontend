@@ -75,7 +75,7 @@ export function AppShell() {
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <NavLink key={item.to} to={item.to} end className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
                 <Icon size={16} />
                 <span>{item.label}</span>
                 {"countKey" in item && dashboard && <strong className="nav-count">{cautionCount}</strong>}
