@@ -8,8 +8,10 @@ type AnalysisDto = AnalysisSummary;
 export interface AnalysisQuery {
   page?: number; // 0-base (Spring Pageable)
   size?: number;
-  keyword?: string; // 서버검색: summary·analysis·action LIKE (GET /api/v1/analysis 지원).
-  // TODO(filter): 위험도/날짜 필터는 백엔드 미지원 — 화면(클라이언트) 측에서 처리한다.
+  startAt?: string; // ISO LocalDateTime. log.occurredAt 반열린 구간 [startAt, endAt).
+  endAt?: string;
+  riskLevel?: string; // 한글 정확일치(긴급/높음/보통/낮음). 백엔드 AnalysisSearchCondition.
+  keyword?: string; // 서버검색: summary·analysis·action LIKE.
 }
 
 export interface AnalysisListResponse {
@@ -52,8 +54,10 @@ export async function listAnalyses(query: AnalysisQuery = {}): Promise<AnalysisL
   const params: Record<string, unknown> = {};
   if (query.page !== undefined) params.page = query.page;
   if (query.size !== undefined) params.size = query.size;
+  if (query.startAt) params.startAt = query.startAt;
+  if (query.endAt) params.endAt = query.endAt;
+  if (query.riskLevel) params.riskLevel = query.riskLevel;
   if (query.keyword) params.keyword = query.keyword;
-  // TODO(filter): 위험도 필터는 백엔드 미지원 — 생기면 params에 병합.
 
   const { data } = await apiClient.get<PageResponse<AnalysisDto>>("/api/v1/analysis", { params });
   return toListResponse(data);
