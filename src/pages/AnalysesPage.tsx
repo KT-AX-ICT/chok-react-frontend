@@ -1,5 +1,5 @@
 import { AlertTriangle, ChevronDown, ChevronUp, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { listAnalyses } from "../api/analyses";
 import { getApiErrorMessage } from "../api/client";
@@ -31,10 +31,28 @@ function formatTimestamp(value: string) {
   return value.slice(0, 19).replace("T", " ");
 }
 
+// Date → 로컬 ISO LocalDateTime("YYYY-MM-DDTHH:mm:ss"). 백엔드 LocalDateTime 형식.
+function toLocalIso(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+// 조회 범위(반열린 구간 [startAt, endAt)). 날짜 선택 시 그 하루, 미선택 시 현재시각 기준 최근 24h.
+// (백엔드 기본값에 맡기면 전체가 집계되므로 항상 명시적으로 범위를 보낸다 — LogsPage와 동일.)
+function rangeFor(date: string) {
+  if (date) {
+    const next = new Date(`${date}T00:00:00`);
+    next.setDate(next.getDate() + 1);
+    return { startAt: `${date}T00:00:00`, endAt: toLocalIso(next) };
+  }
+  const now = new Date();
+  return { startAt: toLocalIso(new Date(now.getTime() - 24 * 60 * 60 * 1000)), endAt: toLocalIso(now) };
+}
+
 export default function AnalysesPage() {
   // URL query를 상태의 단일 출처로 사용(새로고침/북마크 복원). proxy와 무관 — URL을 읽어 요청에 반영할 뿐.
-  // 백엔드 /analysis는 page/size + keyword(summary·analysis·action) 지원.
-  //   keyword·page는 서버 처리, 위험도/날짜는 "현재 페이지 내" 클라이언트 필터(서버 미지원).
+  // 백엔드 /analysis는 page/size + keyword + riskLevel + startAt/endAt(기간) 서버측 필터 지원.
+  //   LogsPage와 동일하게 모든 필터를 서버로 보낸다(클라이언트 재필터 없음 → total이 곧 기간 전체 건수).
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get("page")) || 1); // 1-base(UI)
   const riskLevel = searchParams.get("risk") ?? "ALL";
@@ -65,7 +83,15 @@ export default function AnalysesPage() {
 
   useEffect(() => {
     setLoading(true);
-    listAnalyses({ page: page - 1, size: PAGE_SIZE, keyword: keyword || undefined })
+    const range = rangeFor(date);
+    listAnalyses({
+      page: page - 1,
+      size: PAGE_SIZE,
+      keyword: keyword || undefined,
+      riskLevel: riskLevel !== "ALL" ? riskLevel : undefined,
+      startAt: range.startAt,
+      endAt: range.endAt,
+    })
       .then((response) => {
         setItems(response.items);
         setTotal(response.total);
@@ -80,18 +106,7 @@ export default function AnalysesPage() {
       .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, keyword]);
-
-  // keyword는 서버검색이라 제외 — 위험도/날짜만 현재 페이지 내 클라이언트 필터(서버 미지원).
-  const filtered = useMemo(() => {
-    return items
-      .filter((item) => riskLevel === "ALL" || item.riskLevel === riskLevel)
-      .filter((item) => {
-        // 날짜 선택 시 그 하루, 미선택(최근 24시간) 시 현재 시각 기준 24시간 이내.
-        if (date) return item.log.occurredAt.slice(0, 10) === date;
-        return new Date(item.log.occurredAt).getTime() >= Date.now() - 24 * 60 * 60 * 1000;
-      });
-  }, [items, riskLevel, date]);
+  }, [page, keyword, riskLevel, date]);
 
   const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
@@ -111,7 +126,7 @@ export default function AnalysesPage() {
         iconClassName="text-danger"
         title="주의 로그 AI 분석"
         chip={<span className="count-chip bg-danger/10 text-danger">{total}</span>}
-        note="최근 24시간 · 위험도 높은 순"
+        note={date ? `${date} 분석 결과` : "최근 24시간 · 위험도 높은 순"}
         actions={
           <>
             <FilterSelect
@@ -141,22 +156,22 @@ export default function AnalysesPage() {
 
       {error && <ErrorState message={error} />}
       {loading && <LoadingState />}
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && items.length === 0 && (
         <EmptyState message="표시할 분석 결과가 없습니다." />
       )}
-      {!loading && !error && filtered.length > 0 && (
+      {!loading && !error && items.length > 0 && (
         <>
           <div className="analysis-list scrollbar-slim">
             <div className="analysis-header-grid">
               <span />
-              <span>Timestamp</span>
+              <span className="text-center">발생 시각</span>
               <span>Node</span>
               <span className="text-center">위험도</span>
-              <span>패턴 클러스터</span>
-              <span>AI 요약</span>
+              <span className="text-center">패턴 클러스터</span>
+              <span className="justify-self-start">AI 요약</span>
               <span />
             </div>
-            {filtered.map((item) => {
+            {items.map((item) => {
               const isOpen = expanded.has(item.analysisId);
               // 미분류(99)는 짧게 "미분류", 그 외엔 patternName, 없으면 #clusterId, 패턴 없으면 빈칸.
               const patternLabel =
@@ -188,7 +203,7 @@ export default function AnalysesPage() {
                       <RiskBadge value={item.riskLevel} />
                     </span>
                     <span className="tone-chip truncate" title={patternLabel}>{patternLabel}</span>
-                    <span className="truncate">{item.aiSummary}</span>
+                    <span className="truncate justify-self-stretch text-left">{item.aiSummary}</span>
                     <Link
                       to={`/analyses/${item.log.logId}`}
                       className="detail-link"

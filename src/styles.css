@@ -465,7 +465,7 @@
 
   th,
   td {
-    @apply border-b border-line-soft px-3 py-[9px] text-left align-middle;
+    @apply border-b border-line-soft px-3 py-[9px] text-center align-middle;
   }
 
   th {
@@ -488,9 +488,9 @@
     @apply min-w-0 overflow-hidden text-ellipsis whitespace-nowrap;
   }
 
-  /* 로그 Content 셀: 말줄임 대신 줄바꿈으로 전체 내용 노출(가로 잘림 방지). */
+  /* 로그 Content 셀: 말줄임 대신 줄바꿈으로 전체 내용 노출(가로 잘림 방지). Content만 좌측 정렬. */
   .cell-content {
-    @apply min-w-[280px] whitespace-normal break-words;
+    @apply min-w-[280px] whitespace-normal break-words text-left;
   }
 
   .badge {
@@ -518,24 +518,28 @@
   }
 
   .status-dot.pending {
-    @apply bg-muted;
+    @apply bg-warning;
+  }
+
+  .status-dot.none {
+    @apply border border-muted bg-transparent;
   }
 
   .analysis-header-grid,
   .analysis-row {
     /* 폭은 실제 데이터 기준: Node=R37-M1-N8-I:J18-U11(~19자), 패턴=설명형 긴 제목 → Node·패턴 확장, 위험도 배지 가운데. */
-    @apply grid grid-cols-[16px_155px_175px_72px_185px_minmax(0,1fr)_56px] items-center;
+    @apply grid grid-cols-[16px_155px_175px_72px_185px_minmax(0,1fr)_56px] items-center justify-items-center gap-x-3;
   }
 
   .analysis-header-grid {
     @apply sticky top-0 z-[2] border-b border-line bg-bg px-4 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-faint;
     /* 좁은 화면: 7열 압축 대신 최소폭 확보 → 컨테이너(.analysis-list) 가로 스크롤 */
-    @apply max-lg:min-w-[900px];
+    @apply max-lg:min-w-[960px];
   }
 
   .analysis-row-wrap {
     @apply border-b border-l-2 border-b-line-soft border-l-faint;
-    @apply max-lg:min-w-[900px];
+    @apply max-lg:min-w-[960px];
   }
 
   .analysis-row-wrap.risk-긴급 { @apply border-l-danger; }
