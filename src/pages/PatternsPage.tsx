@@ -77,9 +77,9 @@ export default function PatternsPage() {
                       );
                     })}
                   </div>
-                  <div className="pattern-times">
+                  {/* <div className="pattern-times">
                     <span>중요도 {pattern.importance}</span>
-                  </div>
+                  </div> */}
                 </div>
               );
             })}
