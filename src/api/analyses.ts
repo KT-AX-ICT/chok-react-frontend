@@ -12,6 +12,7 @@ export interface AnalysisQuery {
   endAt?: string;
   riskLevel?: string; // 한글 정확일치(긴급/높음/보통/낮음). 백엔드 AnalysisSearchCondition.
   keyword?: string; // 서버검색: summary·analysis·action LIKE.
+  clusterId?: number; // 패턴 클러스터 정확일치(cluster_id). 백엔드 AnalysisSearchCondition.
 }
 
 export interface AnalysisListResponse {
@@ -58,6 +59,7 @@ export async function listAnalyses(query: AnalysisQuery = {}): Promise<AnalysisL
   if (query.endAt) params.endAt = query.endAt;
   if (query.riskLevel) params.riskLevel = query.riskLevel;
   if (query.keyword) params.keyword = query.keyword;
+  if (query.clusterId !== undefined) params.clusterId = query.clusterId;
 
   const { data } = await apiClient.get<PageResponse<AnalysisDto>>("/api/v1/analysis", { params });
   return toListResponse(data);
