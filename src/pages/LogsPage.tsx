@@ -175,12 +175,12 @@ export default function LogsPage() {
                 <tr>
                   <th />
                   <th>#</th>
-                  <th className="text-center">Status</th>
+                  <th>Status</th>
                   <th>Node</th>
-                  <th className="pr-10 text-center">발생 시각</th>
+                  <th>발생 시각</th>
                   <th>Component</th>
-                  <th className="text-center">Level</th>
-                  <th>Content</th>
+                  <th>Level</th>
+                  <th className="text-left">Content</th>
                 </tr>
               </thead>
               <tbody>
@@ -209,7 +209,7 @@ export default function LogsPage() {
                       <td className="text-faint">{rowNumber}</td>
                       <td><StatusDot status={status} /></td>
                       <td className="truncate">{log.node}</td>
-                      <td className="whitespace-nowrap pr-10 text-muted">{formatTimestamp(log.occurredAt)}</td>
+                      <td className="whitespace-nowrap text-muted">{formatTimestamp(log.occurredAt)}</td>
                       <td className="truncate">{log.component}</td>
                       <td><LevelBadge value={log.logLevel} /></td>
                       <td className="cell-content">{log.content}</td>

@@ -168,7 +168,7 @@ export default function AnalysesPage() {
               <span>Node</span>
               <span className="text-center">위험도</span>
               <span className="text-center">패턴 클러스터</span>
-              <span>AI 요약</span>
+              <span className="justify-self-start">AI 요약</span>
               <span />
             </div>
             {items.map((item) => {
@@ -203,7 +203,7 @@ export default function AnalysesPage() {
                       <RiskBadge value={item.riskLevel} />
                     </span>
                     <span className="tone-chip truncate" title={patternLabel}>{patternLabel}</span>
-                    <span className="truncate">{item.aiSummary}</span>
+                    <span className="truncate justify-self-stretch text-left">{item.aiSummary}</span>
                     <Link
                       to={`/analyses/${item.log.logId}`}
                       className="detail-link"
