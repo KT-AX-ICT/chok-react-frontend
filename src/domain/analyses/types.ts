@@ -26,7 +26,8 @@ export interface AnalysisSummary {
   analysis: string;
   responsePlan: string[];
   log: AnalysisLogInfo;
-  // TODO(backend): patternId(=clusterId)는 엔티티(LogAnalysis)엔 있으나 AnalysisDto 응답엔 미노출.
-  // 노출되면 "패턴 클러스터" 컬럼에 연결한다. 현재는 항상 빈칸.
-  patternId?: number;
+  // 백엔드 AnalysisDto: clusterId=log_analysis.cluster_id(=pattern_view PK), patternName=그 클러스터 제목.
+  // 정상·미분류 등 패턴이 없으면 둘 다 null. (응답엔 항상 키가 있고 값만 null일 수 있어 방어적으로 읽음)
+  clusterId?: number | null;
+  patternName?: string | null;
 }

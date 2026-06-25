@@ -523,18 +523,19 @@
 
   .analysis-header-grid,
   .analysis-row {
-    @apply grid grid-cols-[16px_155px_150px_68px_160px_minmax(0,1fr)_60px] items-center;
+    /* 폭은 실제 데이터 기준: Node=R37-M1-N8-I:J18-U11(~19자), 패턴=설명형 긴 제목 → Node·패턴 확장, 위험도 배지 가운데. */
+    @apply grid grid-cols-[16px_155px_175px_72px_185px_minmax(0,1fr)_56px] items-center;
   }
 
   .analysis-header-grid {
     @apply sticky top-0 z-[2] border-b border-line bg-bg px-4 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-faint;
     /* 좁은 화면: 7열 압축 대신 최소폭 확보 → 컨테이너(.analysis-list) 가로 스크롤 */
-    @apply max-lg:min-w-[860px];
+    @apply max-lg:min-w-[900px];
   }
 
   .analysis-row-wrap {
     @apply border-b border-l-2 border-b-line-soft border-l-faint;
-    @apply max-lg:min-w-[860px];
+    @apply max-lg:min-w-[900px];
   }
 
   .analysis-row-wrap.risk-긴급 { @apply border-l-danger; }

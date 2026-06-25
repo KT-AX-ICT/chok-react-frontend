@@ -23,6 +23,9 @@ const riskOptions = [
 
 const PAGE_SIZE = 20;
 
+// 백엔드 pattern_view 미분류 sentinel(=99). seed 제목은 "미분류 (관리자 검토 필요)"지만 컬럼엔 짧게 표기.
+const UNCLASSIFIED_CLUSTER_ID = 99;
+
 // "2026-06-25T17:05:40.593643" → "2026-06-25 17:05:40" (초까지, T→공백). mock의 공백 형식도 그대로 통과.
 function formatTimestamp(value: string) {
   return value.slice(0, 19).replace("T", " ");
@@ -107,7 +110,7 @@ export default function AnalysesPage() {
         icon={AlertTriangle}
         iconClassName="text-danger"
         title="주의 로그 AI 분석"
-        chip={<span className="count-chip bg-danger/10 text-danger">{filtered.length}</span>}
+        chip={<span className="count-chip bg-danger/10 text-danger">{total}</span>}
         note="최근 24시간 · 위험도 높은 순"
         actions={
           <>
@@ -148,15 +151,18 @@ export default function AnalysesPage() {
               <span />
               <span>Timestamp</span>
               <span>Node</span>
-              <span>위험도</span>
+              <span className="text-center">위험도</span>
               <span>패턴 클러스터</span>
               <span>AI 요약</span>
               <span />
             </div>
             {filtered.map((item) => {
               const isOpen = expanded.has(item.analysisId);
-              // TODO(backend): AnalysisDto에 patternId 미노출 → 현재 항상 빈칸. 노출되면 그대로 표시.
-              const patternLabel = item.patternId !== undefined ? `#${item.patternId}` : "";
+              // 미분류(99)는 짧게 "미분류", 그 외엔 patternName, 없으면 #clusterId, 패턴 없으면 빈칸.
+              const patternLabel =
+                item.clusterId === UNCLASSIFIED_CLUSTER_ID
+                  ? "미분류"
+                  : item.patternName ?? (item.clusterId != null ? `#${item.clusterId}` : "");
               return (
                 <div className={`analysis-row-wrap risk-${item.riskLevel}`} key={item.analysisId}>
                   <div
@@ -178,8 +184,10 @@ export default function AnalysesPage() {
                     )}
                     <span className="whitespace-nowrap text-muted">{formatTimestamp(item.log.occurredAt)}</span>
                     <span className="truncate">{item.log.node}</span>
-                    <RiskBadge value={item.riskLevel} />
-                    <span className="tone-chip truncate">{patternLabel}</span>
+                    <span className="flex justify-center">
+                      <RiskBadge value={item.riskLevel} />
+                    </span>
+                    <span className="tone-chip truncate" title={patternLabel}>{patternLabel}</span>
                     <span className="truncate">{item.aiSummary}</span>
                     <Link
                       to={`/analyses/${item.log.logId}`}
