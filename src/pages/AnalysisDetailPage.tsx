@@ -7,7 +7,16 @@ import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from "../components/common/ErrorState";
 import { EmptyState } from "../components/common/EmptyState";
 import { RiskBadge } from "../components/domain/RiskBadge";
+import { logStatus, type LogStatus } from "../domain/constants";
 import type { LogDetail } from "../domain/log/types";
+
+// 상세 헤더 상태 배지 — logStatus 4-state(SSOT)와 1:1. StatusDot의 statusMeta와 의미 일치.
+const statusMeta: Record<LogStatus, { label: string; tone: string }> = {
+  none: { label: "분석 대상 아님", tone: "muted" },
+  pending: { label: "분석 전", tone: "muted" },
+  normal: { label: "정상", tone: "success" },
+  abnormal: { label: "이상", tone: "danger" },
+};
 
 // 분석 상세 화면 — API 명세 §6.2: GET /api/v1/logs/{logId}.
 // 응답 LogDetail = 원시 로그 + AI 분석(없으면 null) + 매핑 패턴(없으면 null).
@@ -35,6 +44,8 @@ export default function AnalysisDetailPage() {
   if (!detail) return <LoadingState />;
 
   const { log, analysis, pattern } = detail;
+  const status = logStatus(log);
+  const statusInfo = statusMeta[status];
 
   return (
     <div className="detail-page">
@@ -45,6 +56,7 @@ export default function AnalysisDetailPage() {
         </button>
         <span className="font-mono text-xs text-faint">/</span>
         <span className="font-mono text-xs text-text-main">LOG #{log.logId}</span>
+        <span className={`badge ${statusInfo.tone} ml-auto`}>{statusInfo.label}</span>
       </div>
 
       <div className="detail-content scrollbar-hide">
@@ -92,10 +104,13 @@ export default function AnalysisDetailPage() {
               </div>
 
               <div className="detail-card primary">
-                <div className="inline-head mb-3 justify-start">
+                <div className="inline-head mb-1 justify-start">
                   <CheckCircle size={13} className="text-primary" />
-                  <p className="card-title m-0">대응 방안</p>
+                  <p className="card-title m-0">권고 조치 (참고용)</p>
                 </div>
+                <p className="mb-3 text-[13px] text-muted">
+                  AI가 제시하는 참고 권고이며, 실제 조치 여부는 담당자가 판단합니다.
+                </p>
                 <ol className="response-plan long-text">
                   {analysis.responsePlan.map((step, index) => (
                     <li key={index}>{step}</li>
@@ -103,8 +118,18 @@ export default function AnalysisDetailPage() {
                 </ol>
               </div>
             </>
+          ) : status === "none" ? (
+            // 비FATAL = BGL 1열 정상 → AI 분석 대상이 아님
+            <div className="detail-card">
+              <EmptyState message="분석 대상이 아닙니다. (정상 로그)" />
+            </div>
+          ) : status === "normal" ? (
+            // FATAL이지만 2차 분석이 정상 판정 → riskLevel null로 analysis=null (분석 중 아님)
+            <div className="detail-card">
+              <EmptyState message="분석 결과: 정상 — 이상 징후가 발견되지 않았습니다." />
+            </div>
           ) : (
-            // 분석 결과가 아직 없는 로그(분석 전/분석 중) — 명세 §6.2: analysis=null
+            // FATAL·분석 전(pending) — 명세 §6.2: analysis=null
             <div className="detail-card">
               <EmptyState message="아직 분석 결과가 없습니다 (분석 전 또는 분석 중)." />
             </div>

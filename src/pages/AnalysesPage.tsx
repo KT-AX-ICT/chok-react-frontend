@@ -200,7 +200,10 @@ export default function AnalysesPage() {
                         <p>{item.analysis}</p>
                         {item.responsePlan.length > 0 && (
                           <>
-                            <p className="accordion-section-label mt-4 mb-1.5">대응 방안</p>
+                            <p className="accordion-section-label mt-4 mb-0.5">권고 조치 (참고용)</p>
+                            <p className="mb-1.5 text-[13px] text-muted">
+                              AI가 제시하는 참고 권고이며, 실제 조치 여부는 담당자가 판단합니다.
+                            </p>
                             <ol className="response-plan">
                               {item.responsePlan.map((step, index) => (
                                 <li key={index}>{step}</li>
