@@ -164,10 +164,10 @@ export default function AnalysesPage() {
           <div className="analysis-list scrollbar-slim">
             <div className="analysis-header-grid">
               <span />
-              <span>Timestamp</span>
+              <span className="text-center">발생 시각</span>
               <span>Node</span>
               <span className="text-center">위험도</span>
-              <span>패턴 클러스터</span>
+              <span className="text-center">패턴 클러스터</span>
               <span>AI 요약</span>
               <span />
             </div>

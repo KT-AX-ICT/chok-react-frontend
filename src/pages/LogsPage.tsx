@@ -175,11 +175,11 @@ export default function LogsPage() {
                 <tr>
                   <th />
                   <th>#</th>
-                  <th>Status</th>
+                  <th className="text-center">Status</th>
                   <th>Node</th>
-                  <th className="pr-10">Timestamp</th>
+                  <th className="pr-10 text-center">발생 시각</th>
                   <th>Component</th>
-                  <th>Level</th>
+                  <th className="text-center">Level</th>
                   <th>Content</th>
                 </tr>
               </thead>
