@@ -8,7 +8,7 @@ import type { DashboardResponse } from "../../domain/dashboard/types";
 const navItems = [
   { to: "/dashboard", label: "대시보드", icon: BarChart2 },
   { to: "/logs", label: "시스템 로그", icon: List },
-  { to: "/analyses", label: "주의 로그 분석", icon: AlertTriangle, countKey: "caution" },
+  { to: "/analyses", label: "주의 로그 분석", icon: AlertTriangle, countKey: "abnormal" },
   { to: "/patterns", label: "패턴 분석", icon: Activity },
 ];
 
@@ -42,7 +42,7 @@ export function AppShell() {
   const dateRange = useMemo(() => formatRange(dashboard?.range), [dashboard]);
   // 배지 = 판정결과 '진짜 이상'(분석완료+이상). 대시보드 카드와 동일하게 abnormalLogCount 사용,
   // 미배포 구간엔 cautionLogCount로 폴백.
-  const cautionCount = dashboard?.stats.abnormalLogCount ?? dashboard?.stats.cautionLogCount ?? 0;
+  const abnormalCount = dashboard?.stats.abnormalLogCount ?? dashboard?.stats.cautionLogCount ?? 0;
   const totalLogCount = dashboard?.stats.totalLogCount ?? 0;
 
   return (
@@ -80,7 +80,7 @@ export function AppShell() {
               <NavLink key={item.to} to={item.to} end className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
                 <Icon size={16} />
                 <span>{item.label}</span>
-                {"countKey" in item && dashboard && <strong className="nav-count">{cautionCount}</strong>}
+                {"countKey" in item && dashboard && <strong className="nav-count">{abnormalCount}</strong>}
               </NavLink>
             );
           })}
