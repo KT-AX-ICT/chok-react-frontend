@@ -12,6 +12,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // 시연 전용 투어(e2e/demo)는 별도 설정(playwright.demo.config.ts)으로만 돌린다.
+  testIgnore: "demo/**",
   // 데이터 의존 테스트의 흔들림을 줄이기 위해 직렬 실행(파일 간 병렬 off).
   fullyParallel: false,
   workers: 1,
