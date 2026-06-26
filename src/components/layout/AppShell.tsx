@@ -40,7 +40,9 @@ export function AppShell() {
   }, [location.pathname]);
 
   const dateRange = useMemo(() => formatRange(dashboard?.range), [dashboard]);
-  const cautionCount = dashboard?.stats.cautionLogCount ?? 0;
+  // 배지 = 판정결과 '진짜 이상'(분석완료+이상). 대시보드 카드와 동일하게 abnormalLogCount 사용,
+  // 미배포 구간엔 cautionLogCount로 폴백.
+  const cautionCount = dashboard?.stats.abnormalLogCount ?? dashboard?.stats.cautionLogCount ?? 0;
   const totalLogCount = dashboard?.stats.totalLogCount ?? 0;
 
   return (

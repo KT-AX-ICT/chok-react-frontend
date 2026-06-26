@@ -20,7 +20,8 @@ function buildTimeSeries(): TimeSeriesItem[] {
 
 export const mockDashboardResponse: DashboardResponse = {
   range: { startAt: START_AT, endAt: END_AT },
-  stats: { totalLogCount: 15_234, cautionLogCount: 312, analyzedLogCount: 9_000 },
+  // abnormalLogCount(287) < cautionLogCount(312): 차이 25건은 분석 전 FATAL 안전망분.
+  stats: { totalLogCount: 15_234, cautionLogCount: 312, abnormalLogCount: 287, analyzedLogCount: 9_000 },
   timeSeries: buildTimeSeries(),
   riskDistribution: [
     { riskLevel: "긴급", count: 100 },
@@ -98,7 +99,7 @@ export const mockDashboardResponse: DashboardResponse = {
 // VITE_USE_MOCKS=true + VITE_MOCK_EMPTY=true 일 때 사용된다(api/dashboard.ts).
 export const emptyDashboardResponse: DashboardResponse = {
   range: { startAt: START_AT, endAt: END_AT },
-  stats: { totalLogCount: 0, cautionLogCount: 0, analyzedLogCount: 0 },
+  stats: { totalLogCount: 0, cautionLogCount: 0, abnormalLogCount: 0, analyzedLogCount: 0 },
   timeSeries: [],
   riskDistribution: [],
   typeDistribution: [],

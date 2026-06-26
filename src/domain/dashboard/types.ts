@@ -11,7 +11,11 @@ export interface DashboardRange {
 
 export interface DashboardStats {
   totalLogCount: number;
+  // 시스템 판정 주의 건수(2차 이상 OR 2차 전 FATAL 안전망). 분석 전 FATAL까지 포함된다.
   cautionLogCount: number;
+  // 분석 완료 + 판정결과 '이상'인 건수(진짜 이상). 백엔드 추가 요청 필드.
+  // 배포 전 구간 대비해 화면에서는 미존재 시 cautionLogCount로 폴백한다.
+  abnormalLogCount?: number;
   analyzedLogCount: number;
 }
 

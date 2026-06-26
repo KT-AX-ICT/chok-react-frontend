@@ -132,6 +132,9 @@ export default function DashboardPage() {
   if (error) return <ErrorState message={error} />;
   if (!dashboard || !view) return <LoadingState />;
 
+  // 주의 로그 카드 = 판정결과 '진짜 이상'(분석완료+이상) 기준. 백엔드 abnormalLogCount,
+  // 미배포 구간엔 cautionLogCount로 폴백. 사이드바 배지(AppShell)와 동일 출처를 쓴다.
+  const abnormalLogCount = dashboard.stats.abnormalLogCount ?? dashboard.stats.cautionLogCount;
   // 데이터가 없어도 카드 프레임은 유지하고, 각 섹션 내부에서 "데이터 없음"을 표시한다.
   const maxComponent = Math.max(...view.componentBars.map((item) => item.count), 1);
   const hasTimeSeries = view.timeSeries.some((point) => point.total > 0 || point.caution > 0);
@@ -155,7 +158,7 @@ export default function DashboardPage() {
               <AlertTriangle size={14} />
               <span className="mini-dot" />
             </div>
-            <strong className="stat-value">{dashboard.stats.cautionLogCount.toLocaleString()}</strong>
+            <strong className="stat-value">{abnormalLogCount.toLocaleString()}</strong>
             <p className="stat-label">최근 24시간 주의 로그</p>
             <p className="stat-sub">분석 결과 이상 로그 · 확인 필요</p>
           </div>
