@@ -13,6 +13,10 @@ import { defineConfig, devices } from "@playwright/test";
  *        (데이터가 보이려면 백엔드 8080 이 가동 중이어야 함)
  *        실행 후 영상: test-results/<...>/video.webm
  */
+// 데모 전용 dev 서버 포트. 개발용 서버(보통 5173)와 충돌하지 않도록 기본 5180.
+// E2E_PORT 로 바꿀 수 있다.
+const PORT = process.env.E2E_PORT ?? "5180";
+
 export default defineConfig({
   testDir: "./e2e/demo",
   fullyParallel: false,
@@ -24,8 +28,11 @@ export default defineConfig({
   expect: { timeout: 10_000 },
 
   use: {
-    baseURL: "http://localhost:5173",
-    headless: false, // 실제 브라우저 창을 띄워 보여준다.
+    baseURL: `http://localhost:${PORT}`,
+    // 헤드리스로 녹화한다. 헤디드(창 표시)면 1080 모니터에서 브라우저 창이 화면에
+    // 다 안 들어가 뷰포트가 1080보다 작아지고, 영상 아래에 빈 공간이 생긴다.
+    // 헤드리스는 창 제약이 없어 정확히 1920×1080 으로 렌더 → 영상이 꽉 찬다.
+    headless: true,
     viewport: { width: 1920, height: 1080 },
     video: { mode: "on", size: { width: 1920, height: 1080 } },
     trace: "off",
@@ -46,8 +53,8 @@ export default defineConfig({
 
   // 일반 설정과 동일하게 dev 서버를 mock=false 로 자동 기동. 백엔드(8080)는 별도.
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
+    command: `npm run dev -- --port ${PORT} --strictPort`,
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {

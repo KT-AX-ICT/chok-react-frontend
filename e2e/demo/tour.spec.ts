@@ -74,13 +74,39 @@ test.describe("CHOK 시연 투어", () => {
       await expect(page).not.toHaveURL(/level=/);
     });
 
-    await test.step("'이상만' 토글 → 해제", async () => {
-      const button = page.getByRole("button", { name: "이상만" });
-      await clickLike(page, button);
+    await test.step("'이상만' 토글: 이상 로그만 보기", async () => {
+      await clickLike(page, page.getByRole("button", { name: "이상만" }));
       await expect(page).toHaveURL(/abnormal=1/);
       await pause(page, 1500);
-      // 다시 눌러 해제.
-      await clickLike(page, button);
+    });
+
+    // '이상만'이 켜진 상태라 모든 행이 이상 로그(빨간 마커 .row-marker)다.
+    // 그 중 빨간 마커가 있는 행을 골라 상세로 진입한다.
+    const redRows = page.locator("table tbody tr").filter({ has: page.locator(".row-marker") });
+    let openedDetail = false;
+    await test.step("빨간 이상 로그 → 상세 보기", async () => {
+      if ((await redRows.count()) === 0) return; // 이상 로그가 없으면 건너뜀.
+      await clickLike(page, redRows.first());
+      if (/\/analyses\/\d+/.test(page.url())) {
+        openedDetail = true;
+        await expect(page.getByText("원본 로그")).toBeVisible();
+        // 상세 본문은 표시 전용 → 짧게 한 번 훑고 나온다.
+        await pause(page, 1200);
+        await scrollSlowly(page, 500, 5);
+        await pause(page, 1200);
+        await scrollSlowly(page, -500, 5);
+        await pause(page, 800);
+      }
+    });
+
+    await test.step("상세에서 뒤로", async () => {
+      if (!openedDetail) return;
+      await clickLike(page, page.getByRole("button", { name: "뒤로" }));
+      await expect(page).toHaveURL(/\/logs/);
+    });
+
+    await test.step("'이상만' 해제", async () => {
+      await clickLike(page, page.getByRole("button", { name: "이상만" }));
       await expect(page).not.toHaveURL(/abnormal=1/);
     });
 
@@ -90,29 +116,6 @@ test.describe("CHOK 시연 투어", () => {
       await pause(page, 800);
       await search.press("Enter");
       await pause(page);
-    });
-
-    let openedDetail = false;
-    await test.step("첫 로그 행 클릭 → 상세 보기", async () => {
-      // 데이터가 없으면(빈 결과) 상세 진입은 건너뛴다 — 시연이 멈추지 않게.
-      if ((await logRows(page).count()) === 0) return;
-      await clickLike(page, logRows(page).first());
-      if (/\/analyses\/\d+/.test(page.url())) {
-        openedDetail = true;
-        await expect(page.getByText("원본 로그")).toBeVisible();
-        // 상세 본문(원본 로그·AI 요약)은 표시 전용이라 스크롤로 읽어 내려간다.
-        await pause(page, 2500);
-        await scrollSlowly(page, 500);
-        await pause(page, 3000);
-        await scrollSlowly(page, -500);
-        await pause(page, 1500);
-      }
-    });
-
-    await test.step("상세에서 뒤로", async () => {
-      if (!openedDetail) return;
-      await clickLike(page, page.getByRole("button", { name: "뒤로" }));
-      await expect(page).toHaveURL(/\/logs/);
     });
 
     // ── 3. 주의 로그 분석: 아코디언 펼치기 → 위험도 필터 ──────────────────────
