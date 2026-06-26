@@ -21,6 +21,20 @@ const riskOptions = [
   { value: "낮음", label: "낮음" },
 ];
 
+// 패턴 클러스터 필터: value=cluster_id, label=패턴명(하드코딩). 99는 미분류 sentinel.
+const clusterOptions = [
+  { value: "ALL", label: "전체 패턴" },
+  { value: "0", label: "메모리 인터럽트 오류군" },
+  { value: "1", label: "마운트 실패 장애군" },
+  { value: "2", label: "ciod 통신/로딩 오류군" },
+  { value: "3", label: "커널 강제종료 장애군" },
+  { value: "4", label: "rts 패닉/정지 장애군" },
+  { value: "5", label: "트리망 패킷 오류군" },
+  { value: "6", label: "ciod 프로세스 오류군" },
+  { value: "7", label: "ciod 입출력 오류군" },
+  { value: "99", label: "미분류 검토 필요군" },
+];
+
 const PAGE_SIZE = 20;
 
 // 백엔드 pattern_view 미분류 sentinel(=99). seed 제목은 "미분류 (관리자 검토 필요)"지만 컬럼엔 짧게 표기.
@@ -56,6 +70,7 @@ export default function AnalysesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get("page")) || 1); // 1-base(UI)
   const riskLevel = searchParams.get("risk") ?? "ALL";
+  const cluster = searchParams.get("cluster") ?? "ALL";
   const keyword = searchParams.get("q") ?? "";
   const date = searchParams.get("date") ?? "";
 
@@ -89,6 +104,7 @@ export default function AnalysesPage() {
       size: PAGE_SIZE,
       keyword: keyword || undefined,
       riskLevel: riskLevel !== "ALL" ? riskLevel : undefined,
+      clusterId: cluster !== "ALL" ? Number(cluster) : undefined,
       startAt: range.startAt,
       endAt: range.endAt,
     })
@@ -106,7 +122,7 @@ export default function AnalysesPage() {
       .catch((err: unknown) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, keyword, riskLevel, date]);
+  }, [page, keyword, riskLevel, cluster, date]);
 
   const dateValue: DateFilterValue = { selectedDate: date, recent24h: !date };
 
@@ -126,7 +142,7 @@ export default function AnalysesPage() {
         iconClassName="text-danger"
         title="주의 로그 AI 분석"
         chip={<span className="count-chip bg-danger/10 text-danger">{total}</span>}
-        note={date ? `${date} 분석 결과` : "최근 24시간 · 위험도 높은 순"}
+        note={date ? `${date} 분석 결과` : "최근 24시간"}
         actions={
           <>
             <FilterSelect
@@ -134,6 +150,12 @@ export default function AnalysesPage() {
               value={riskLevel}
               options={riskOptions}
               onChange={(value) => updateParams({ risk: value === "ALL" ? "" : value })}
+            />
+            <FilterSelect
+              label="Pattern"
+              value={cluster}
+              options={clusterOptions}
+              onChange={(v) => updateParams({ cluster: v === "ALL" ? "" : v })}
             />
             <DateFilter
               value={dateValue}

@@ -82,6 +82,21 @@ function DonutChart({ data }: { data: Array<{ riskLevel: string; count: number; 
           const start = (cumulative / total) * 360;
           cumulative += item.count;
           const end = (cumulative / total) * 360;
+          // 단일 100% 구간(360°)은 호의 시작점=끝점이라 path로 안 그려짐 → 풀 링(circle)으로 처리.
+          if (end - start >= 360) {
+            return (
+              <circle
+                key={item.riskLevel}
+                cx="50"
+                cy="50"
+                r="32"
+                fill="none"
+                stroke={item.color}
+                strokeWidth="12"
+                opacity="0.85"
+              />
+            );
+          }
           const large = end - start > 180 ? 1 : 0;
           const outerStart = toXY(start, 38);
           const outerEnd = toXY(end, 38);
@@ -168,7 +183,7 @@ export default function DashboardPage() {
             {riskTotal === 0 ? (
               <p className="mini-empty">표시할 데이터가 없습니다.</p>
             ) : (
-              <>
+              <div className="risk-dist">
                 <DonutChart data={view.riskDistribution} />
                 <div className="risk-list">
                   {view.riskDistribution.map((item) => (
@@ -178,7 +193,7 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -237,7 +252,7 @@ export default function DashboardPage() {
                     <TrendingUp size={10} className="mt-0.5 shrink-0 text-primary" />
                     <div className="truncate">
                       <p>{pattern.patternName}</p>
-                      <small><span>{pattern.count.toLocaleString()}건</span><span>중요도 {pattern.importance}</span></small>
+                      <small><span>{pattern.count.toLocaleString()}건</span></small>
                     </div>
                   </div>
                 ))
