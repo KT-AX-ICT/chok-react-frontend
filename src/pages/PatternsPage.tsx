@@ -44,7 +44,7 @@ export default function PatternsPage() {
         <div className="screen-scroll scrollbar-slim">
           <div className="pattern-grid">
             {patterns.map((pattern) => {
-              const max = Math.max(pattern.count, 1);
+              const max = Math.max(...(pattern.riskCounts?.map((r) => r.count) ?? []), 1);
               return (
                 <div key={pattern.patternId} className="pattern-card">
                   <div className="pattern-card-head">
@@ -63,9 +63,9 @@ export default function PatternsPage() {
                   </div>
                   <div className="risk-bars">
                     {riskBars.map((risk) => {
-                      // 패턴 위험도(소속 분석 최고 위험도) 막대. 백엔드가 분포를 주지 않으므로
-                      // 해당 위험도 칸만 count로 채운다(단일 값 기준).
-                      const value = risk.key === pattern.riskLevel ? pattern.count : 0;
+                      // 위험도별 분포 막대: 백엔드 riskCounts 실데이터에서 해당 위험도 건수를 조회.
+                      // riskCounts 미제공(백엔드 미배포 등) 시 0으로 방어 — 모든 막대가 빈 상태로 렌더.
+                      const value = pattern.riskCounts?.find((r) => r.riskLevel === risk.key)?.count ?? 0;
                       return (
                         <div className="risk-bar" key={risk.key}>
                           <span className={riskToneClass[risk.key]}>{risk.key}</span>

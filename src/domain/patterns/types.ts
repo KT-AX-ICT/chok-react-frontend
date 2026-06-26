@@ -11,4 +11,5 @@ export interface PatternSummary {
   importance: number; // 중요도(정렬용)
   count: number; // 파생: cluster_id 매핑 log_analysis 행 수(집계)
   riskLevel: RiskLevel | null; // 파생: 소속 분석 최고 위험도(없으면 null)
+  riskCounts?: { riskLevel: RiskLevel; count: number }[]; // 파생: 위험도별 분포(백엔드 미배포 가능 → optional)
 }
